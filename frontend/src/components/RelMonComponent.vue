@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="elevation-3 mb-2 pl-4 pr-4 pt-2 pb-2" style="background: white; position: relative;">
+    <div class="elevation-3 mb-2 pl-3 pr-3 pt-2 pb-2" style="background: white; position: relative;">
       <v-row>
         <v-col cols=12>
           <span class="bigger-text">{{relmonData.name}}</span>
