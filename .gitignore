@@ -112,3 +112,6 @@ logs/*
 relmons/*
 !logs/.empty
 !relmons/.empty
+
+# pid file
+*.pid

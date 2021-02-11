@@ -361,6 +361,13 @@ def main():
     port = args.get('port')
     host = args.get('host')
     logger.info('Will run on %s:%s', host, port)
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        # Do only once, before the reloader
+        pid = os.getpid()
+        logger.info('PID: %s', pid)
+        with open('relmonservice.pid', 'w') as pid_file:
+            pid_file.write(str(pid))
+
     app.run(host=host,
             port=port,
             debug=debug,
