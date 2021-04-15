@@ -1,15 +1,3 @@
-# Order deny,allow
-# Deny from all
-# Allow from 188.184.30.73 188.185.84.85
-
-# SSLRequireSSL # The modules only work using HTTPS
-# AuthType shibboleth
-# ShibRequireSession On
-# ShibRequireAll On
-# ShibExportAssertion Off
-
-# Require valid-user
-
 RewriteEngine on
 
 RewriteRule "^.*fancy-type/screen.css$" "fancy-type-screen.css" [L]
@@ -17,3 +5,11 @@ RewriteRule "^.*/(.*).css$" "$1.css" [L]
 RewriteRule "^favicon.png$" "favicon.png" [L]
 RewriteRule "^(.*).html$" "index.php/$1.htmlgz" [L]
 RewriteRule "^(.*).png$" "index.php/$1.pnggz" [L]
+
+<Files "delete.php">
+  Require all denied
+  <RequireAny>
+    Require ip 188.185.84.85
+    Require ip 2001:1458:d00:f::100:4f
+  </RequireAny>
+</Files>
