@@ -41,11 +41,8 @@ def get_root_file_path_for_dataset(cmsweb, dqmio_dataset, category_name):
     logging.info('Getting root file path for dataset %s. Category %s',
                  dqmio_dataset,
                  category_name)
-    parts = dqmio_dataset.split('/')[1:]
-    dataset = parts[0]
-    cmssw = parts[1].split('-')[0]
-    processing_string = parts[1].split('-')[1]
-    dataset_part = dataset + "__" + cmssw + '-' + processing_string + '-'
+    cmssw = dqmio_dataset.split('/')[2].split('-')[0]
+    dataset_part = dqmio_dataset.replace('/', '__')
     if category_name == 'Data':
         cmsweb_dqm_dir_link = '/dqm/relval/data/browse/ROOT/RelValData/'
     else:
@@ -111,21 +108,29 @@ def download_root_files(relmon, cmsweb, callback_url):
         reference_list = category.get('reference', [])
         target_list = category.get('target', [])
         for item in reference_list + target_list:
-            workflow = cmsweb.get_workflow(item['name'])
-            if not workflow:
-                item['status'] = 'no_workflow'
-                notify(relmon, callback_url)
-                logging.warning('Could not find workflow %s in ReqMgr2', item['name'])
-                continue
+            name = item['name']
+            if name.lower().startswith('/relval') and name.lower().endswith('/dqmio'):
+                logging.info('Name %s is dataset name', name)
+                # Dataset name
+                dqmio_dataset = name
+            else:
+                logging.info('Name %s is workflow name', name)
+                # Workflow name
+                workflow = cmsweb.get_workflow(item['name'])
+                if not workflow:
+                    item['status'] = 'no_workflow'
+                    notify(relmon, callback_url)
+                    logging.warning('Could not find workflow %s in ReqMgr2', item['name'])
+                    continue
 
-            dqmio_dataset = get_dqmio_dataset(workflow)
-            if not dqmio_dataset:
-                item['status'] = 'no_dqmio'
-                notify(relmon, callback_url)
-                logging.warning('Could not find DQMIO dataset in %s. Datasets: %s',
-                                item['name'],
-                                ', '.join(workflow.get('OutputDatasets', [])))
-                continue
+                dqmio_dataset = get_dqmio_dataset(workflow)
+                if not dqmio_dataset:
+                    item['status'] = 'no_dqmio'
+                    notify(relmon, callback_url)
+                    logging.warning('Could not find DQMIO dataset in %s. Datasets: %s',
+                                    item['name'],
+                                    ', '.join(workflow.get('OutputDatasets', [])))
+                    continue
 
             file_urls = get_root_file_path_for_dataset(cmsweb, dqmio_dataset, category_name)
             if not file_urls:
