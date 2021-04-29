@@ -79,14 +79,14 @@ class RelMon():
         """
         Replace all non letters, digits, hyphens and underscores with underscore
         """
-        return re.sub(r'[^A-Za-z0-9\-_]', '_', name.strip())
+        return re.sub(r'[^A-Za-z0-9/\-_]', '_', name.strip())
 
     @staticmethod
     def sanitize_name(name):
         """
         Replace all non letters, digits, hyphens and underscores with underscore
         """
-        return re.sub(r'[^A-Za-z0-9\-_]', '_', name.strip())
+        return re.sub(r'[^A-Za-z0-9/\-_]', '_', name.strip())
 
     def reset_category(self, category_name):
         """
