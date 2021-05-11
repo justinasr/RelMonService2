@@ -133,15 +133,16 @@ class RelMon():
         category['reference'] = new_references
         category['target'] = new_targets
 
-    def reset(self):
+    def reset(self, reset_categories=True):
         """
         Reset relmon and zero-out references and targets
         """
         self.set_status('new')
         self.set_condor_status('<unknown>')
         self.set_condor_id(0)
-        for category in self.data['categories']:
-            self.reset_category(category['name'])
+        if reset_categories:
+            for category in self.data['categories']:
+                self.reset_category(category['name'])
 
         return self.data
 
@@ -156,6 +157,12 @@ class RelMon():
         Getter for name
         """
         return self.data.get('name')
+
+    def set_name(self, name):
+        """
+        Getter for name
+        """
+        self.data['name'] = name
 
     def get_cpu(self):
         """
@@ -284,6 +291,18 @@ class RelMon():
         Return dictionary with user info who acted on this RelMon last
         """
         return self.data['user_info']
+
+    def get_bare_category(self, category_name):
+        """
+        Return bare minimum category: list of references, list of targets, pairing and hlt settings
+        """
+        category = self.get_category(category_name)
+        bare_category = {'reference': [x['name'] for x in category.get('reference', [])],
+                         'target': [x['name'] for x in category.get('target', [])],
+                         'automatic_pairing': category.get('automatic_pairing'),
+                         'hlt': category.get('hlt')}
+
+        return bare_category
 
     def __str__(self):
         return '%s (%s)' % (self.get_name(), self.get_id())

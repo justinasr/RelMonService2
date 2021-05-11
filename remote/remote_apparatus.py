@@ -17,8 +17,10 @@ import time
 import sys
 import traceback
 from difflib import SequenceMatcher
+#pylint: disable=import-error
 from cmswebwrapper import CMSWebWrapper
 from events import get_events
+#pylint: enable=import-error
 
 
 def get_dqmio_dataset(workflow):
@@ -235,6 +237,45 @@ def clean_file_tree(tree):
                 del tree[key]
 
 
+def calculate_similarities(references, targets):
+    """
+    Calculate similarities for all possible pairs of references and targets
+    """
+    all_ratios = []
+    for reference in references:
+        for target in targets:
+            reference_string = get_important_part(reference['file_name'])
+            target_string = get_important_part(target['file_name'])
+            ratio = SequenceMatcher(a=reference_string, b=target_string).ratio()
+            reference_target_ratio = (reference, target, ratio)
+            all_ratios.append(reference_target_ratio)
+            logging.info('%s %s -> %s', reference_string, target_string, ratio)
+
+    all_ratios.sort(key=lambda x: x[2], reverse=True)
+    return all_ratios
+
+
+def pick_pairs(all_ratios):
+    """
+    Pick pairs with highest similarity
+    """
+    used_references = set()
+    used_targets = set()
+    selected_pairs = []
+    for reference_target_ratio in all_ratios:
+        reference = reference_target_ratio[0]
+        target = reference_target_ratio[1]
+        reference_name = reference['file_name']
+        target_name = target['file_name']
+        ratio = reference_target_ratio[2]
+        if reference_name not in used_references and target_name not in used_targets:
+            logging.info('Pair %s with %s. Similarity %.3f', reference_name, target_name, ratio)
+            used_references.add(reference_name)
+            used_targets.add(target_name)
+            selected_pairs.append((reference, target))
+
+    return selected_pairs
+
 def pair_references_with_targets(category):
     """
     Do automatic pairing based on dataset names, runs and similarities in names
@@ -269,50 +310,23 @@ def pair_references_with_targets(category):
                              json.dumps(references_in_run, indent=2, sort_keys=True),
                              json.dumps(targets_in_run, indent=2, sort_keys=True))
 
-                all_ratios = []
-                for reference in references_in_run:
-                    for target in targets_in_run:
-                        reference_string = get_important_part(reference['file_name'])
-                        target_string = get_important_part(target['file_name'])
-                        ratio = SequenceMatcher(a=reference_string, b=target_string).ratio()
-                        reference_target_ratio = (reference, target, ratio)
-                        all_ratios.append(reference_target_ratio)
-                        logging.info('%s %s -> %s', reference_string, target_string, ratio)
-
-                used_references = set()
-                used_targets = set()
-                all_ratios.sort(key=lambda x: x[2], reverse=True)
-                for reference_target_ratio in all_ratios:
-                    reference_name = reference_target_ratio[0]['file_name']
-                    target_name = reference_target_ratio[1]['file_name']
-                    similarity_ratio = reference_target_ratio[2]
-                    if reference_name not in used_references and target_name not in used_targets:
-                        logging.info('Pair %s with %s. Similarity %.3f',
-                                     reference_name,
-                                     target_name,
-                                     similarity_ratio)
-                        used_references.add(reference_name)
-                        used_targets.add(target_name)
-                        references_in_run.remove(reference_target_ratio[0])
-                        targets_in_run.remove(reference_target_ratio[1])
-                        selected_pairs.append((reference_name, target_name))
-                        reference_target_ratio[0]['match'] = reference_target_ratio[1]['name']
-                        reference_target_ratio[1]['match'] = reference_target_ratio[0]['name']
+                all_ratios = calculate_similarities(references_in_run, targets_in_run)
+                pairs = pick_pairs(all_ratios)
+                for reference, target in pairs:
+                    references_in_run.remove(reference)
+                    targets_in_run.remove(target)
+                    selected_pairs.append((reference['file_name'], target['file_name']))
+                    reference['match'] = target['name']
+                    target['match'] = reference['name']
 
     # Delete empty items wo there would be less to print
-    clean_file_tree(reference_tree)
-    clean_file_tree(target_tree)
-    for _, reference_runs in reference_tree.items():
-        for _, references_in_run in reference_runs.items():
-            for reference in references_in_run:
-                if reference['status'] == 'downloaded':
-                    reference['status'] = 'no_match'
-
-    for _, target_runs in target_tree.items():
-        for _, targets_in_run in target_runs.items():
-            for target in targets_in_run:
-                if target['status'] == 'downloaded':
-                    target['status'] = 'no_match'
+    for tree in (reference_tree, target_tree):
+        clean_file_tree(tree)
+        for _, runs in tree.items():
+            for _, items_in_run in runs.items():
+                for item in items_in_run:
+                    if item['status'] == 'downloaded':
+                        item['status'] = 'no_match'
 
     logging.info('References leftovers tree: %s',
                  json.dumps(reference_tree, indent=2, sort_keys=True))

@@ -3,8 +3,10 @@ Module contains a function get_events that extracts number of events from DQMIO 
 """
 import logging
 try:
+    #pylint: disable=import-error
     import ROOT
-except:
+    #pylint: enable=import-error
+except ImportError:
     logging.error('Error importing ROOT')
 
 

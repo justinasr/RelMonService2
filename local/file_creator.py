@@ -121,7 +121,8 @@ class FileCreator():
         with open(relmon_file_name, 'w') as output_file:
             json.dump(relmon_data, output_file, indent=2, sort_keys=True)
 
-    def create_condor_job_file(self, relmon):
+    @classmethod
+    def create_condor_job_file(cls, relmon):
         """
         Create a condor job file for a relmon
         """

@@ -22,7 +22,7 @@ app = Flask(__name__,
             template_folder="./frontend/dist")
 api = Api(app)
 scheduler = BackgroundScheduler()
-controller = None
+controller = Controller()
 
 
 @app.route('/')
@@ -134,45 +134,28 @@ def get_relmons():
         data, total_rows = database.get_relmons(page=page, page_size=limit)
 
     for relmon in data:
-        if 'user_info' in relmon:
-            del relmon['user_info']
-
+        relmon.pop('user_info', None)
         relmon['total_relvals'] = 0
         relmon['downloaded_relvals'] = 0
         relmon['compared_relvals'] = 0
         for category in relmon.get('categories'):
             relmon['total_relvals'] += len(category['reference']) + len(category['target'])
-            category['reference_status'] = {}
-            category['reference_size'] = 0
-            for relval in category['reference']:
-                category['reference_size'] += relval.get('file_size', 0)
-                relmon_status = relval['status']
-                if relmon_status not in category['reference_status']:
-                    category['reference_status'][relmon_status] = 0
+            for reference_target in ('reference', 'target'):
+                category['%s_status' % (reference_target)] = {}
+                category['%s_size' % (reference_target)] = 0
+                for relval in category[reference_target]:
+                    category['%s_size' % (reference_target)] += relval.get('file_size', 0)
+                    relmon_status = relval['status']
+                    if relmon_status not in category['%s_status' % (reference_target)]:
+                        category['%s_status' % (reference_target)][relmon_status] = 0
 
-                if relmon_status != 'initial':
-                    relmon['downloaded_relvals'] += + 1
+                    if relmon_status != 'initial':
+                        relmon['downloaded_relvals'] += + 1
 
-                if category['status'] == 'done':
-                    relmon['compared_relvals'] += 1
+                    if category['status'] == 'done':
+                        relmon['compared_relvals'] += 1
 
-                category['reference_status'][relmon_status] += 1
-
-            category['target_status'] = {}
-            category['target_size'] = 0
-            for relval in category['target']:
-                category['target_size'] += relval.get('file_size', 0)
-                relmon_status = relval['status']
-                if relmon_status not in category['target_status']:
-                    category['target_status'][relmon_status] = 0
-
-                if relmon_status != 'initial':
-                    relmon['downloaded_relvals'] = relmon['downloaded_relvals'] + 1
-
-                if category['status'] == 'done':
-                    relmon['compared_relvals'] += 1
-
-                category['target_status'][relmon_status] += 1
+                    category['%s_status' % (reference_target)][relmon_status] += 1
 
     return output_text({'data': data, 'total_rows': total_rows, 'page_size': limit})
 
@@ -346,8 +329,7 @@ def main():
     config = get_config(mode)
     scheduler.add_executor('processpool')
     if not debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        global controller
-        controller = Controller(config)
+        controller.set_config(config)
         scheduler.add_job(tick,
                           'interval',
                           seconds=int(config.get('tick_interval')),
