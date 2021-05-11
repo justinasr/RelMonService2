@@ -11,11 +11,11 @@ import json
 import argparse
 import re
 import logging
-import subprocess
 import os
 import time
 import sys
 import traceback
+from subprocess import Popen
 from difflib import SequenceMatcher
 #pylint: disable=import-error
 from cmswebwrapper import CMSWebWrapper
@@ -90,10 +90,9 @@ def notify(relmon, callback_url):
                '-o',
                '/dev/null']
     command = ' '.join(command)
-    logging.info('Notifying...')
-    proc = subprocess.Popen(command,
-                            shell=True)
-    proc.wait()
+    with Popen(command, shell=True):
+        logging.info('Notifying...')
+
     os.remove('notify_data.json')
     time.sleep(0.05)
 
@@ -397,85 +396,71 @@ def compare_compress_move(category_name, hlt, reference_list, target_list, cpus,
     move_command = ' '.join(['mv', subreport_path, 'Reports/'])
 
     logging.info('ValidationMatrix command: %s', comparison_command)
-    proc = subprocess.Popen(comparison_command,
-                            stdout=log_file,
-                            stderr=log_file,
-                            shell=True)
-    proc.communicate()
+    with Popen(comparison_command, stdout=log_file, stderr=log_file, shell=True) as proc:
+        proc.communicate()
 
     logging.info('Path fix command: %s', path_fix_command)
-    proc = subprocess.Popen(path_fix_command,
-                            stdout=log_file,
-                            stderr=log_file,
-                            shell=True)
-    proc.communicate()
+    with Popen(path_fix_command, stdout=log_file, stderr=log_file, shell=True) as proc:
+        proc.communicate()
 
     logging.info('Compression command: %s', compression_command)
-    proc = subprocess.Popen(compression_command,
-                            stdout=log_file,
-                            stderr=log_file,
-                            shell=True)
-    proc.communicate()
+    with Popen(compression_command, stdout=log_file, stderr=log_file, shell=True) as proc:
+        proc.communicate()
 
     logging.info('Move command: %s', move_command)
-    proc = subprocess.Popen(move_command,
-                            stdout=log_file,
-                            stderr=log_file,
-                            shell=True)
-    proc.communicate()
+    with Popen(move_command, stdout=log_file, stderr=log_file, shell=True) as proc:
+        proc.communicate()
 
 
 def run_validation_matrix(relmon, cpus, callback_url):
     """
     Iterate through categories and start comparison process
     """
-    log_file = open("validation_matrix.log", "w")
-    for category in relmon.get('categories', []):
-        if category['status'] != 'initial':
-            continue
+    with open("validation_matrix.log", "w") as log_file:
+        for category in relmon.get('categories', []):
+            if category['status'] != 'initial':
+                continue
 
-        category_name = category['name']
-        subreport_path_no_hlt = get_local_subreport_path(category_name, False)
-        logging.info('Creating directory %s', subreport_path_no_hlt)
-        os.makedirs('Reports/' + subreport_path_no_hlt)
-        if category_name.lower() != 'generator':
-            subreport_path_hlt = get_local_subreport_path(category_name, True)
-            logging.info('Creating directory %s', subreport_path_hlt)
-            os.makedirs('Reports/' + subreport_path_hlt)
+            category_name = category['name']
+            subreport_path_no_hlt = get_local_subreport_path(category_name, False)
+            logging.info('Creating directory %s', subreport_path_no_hlt)
+            os.makedirs('Reports/' + subreport_path_no_hlt)
+            if category_name.lower() != 'generator':
+                subreport_path_hlt = get_local_subreport_path(category_name, True)
+                logging.info('Creating directory %s', subreport_path_hlt)
+                os.makedirs('Reports/' + subreport_path_hlt)
 
-        hlt = category['hlt']
-        logging.info('Category: %s', category_name)
-        logging.info('HLT: %s', hlt)
-        reference_list, target_list = get_dataset_lists(category)
-        if reference_list and target_list:
-            category['status'] = 'comparing'
-            notify(relmon, callback_url)
-            # Run Generator without HLT
-            # Do not run Generator with HLT
-            if hlt in ('only', 'both') and category_name.lower() != 'generator':
-                # Run with HLT
-                # Do not run generator with HLT
-                compare_compress_move(category_name,
-                                      True,
-                                      reference_list,
-                                      target_list,
-                                      cpus,
-                                      log_file)
-
-            if hlt in ('no', 'both') or category_name.lower() == 'generator':
-                # Run without HLT
+            hlt = category['hlt']
+            logging.info('Category: %s', category_name)
+            logging.info('HLT: %s', hlt)
+            reference_list, target_list = get_dataset_lists(category)
+            if reference_list and target_list:
+                category['status'] = 'comparing'
+                notify(relmon, callback_url)
                 # Run Generator without HLT
-                compare_compress_move(category_name,
-                                      False,
-                                      reference_list,
-                                      target_list,
-                                      cpus,
-                                      log_file)
+                # Do not run Generator with HLT
+                if hlt in ('only', 'both') and category_name.lower() != 'generator':
+                    # Run with HLT
+                    # Do not run generator with HLT
+                    compare_compress_move(category_name,
+                                        True,
+                                        reference_list,
+                                        target_list,
+                                        cpus,
+                                        log_file)
 
-        category['status'] = 'done'
-        notify(relmon, callback_url)
+                if hlt in ('no', 'both') or category_name.lower() == 'generator':
+                    # Run without HLT
+                    # Run Generator without HLT
+                    compare_compress_move(category_name,
+                                        False,
+                                        reference_list,
+                                        target_list,
+                                        cpus,
+                                        log_file)
 
-    log_file.close()
+            category['status'] = 'done'
+            notify(relmon, callback_url)
 
 
 def main():
