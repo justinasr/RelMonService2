@@ -90,8 +90,9 @@ def notify(relmon, callback_url):
                '-o',
                '/dev/null']
     command = ' '.join(command)
-    with Popen(command, shell=True):
-        logging.info('Notifying...')
+    logging.info('Notifying...')
+    proc = Popen(command, shell=True)
+    proc.wait()
 
     os.remove('notify_data.json')
     time.sleep(0.05)
@@ -396,20 +397,20 @@ def compare_compress_move(category_name, hlt, reference_list, target_list, cpus,
     move_command = ' '.join(['mv', subreport_path, 'Reports/'])
 
     logging.info('ValidationMatrix command: %s', comparison_command)
-    with Popen(comparison_command, stdout=log_file, stderr=log_file, shell=True) as proc:
-        proc.communicate()
+    proc = Popen(comparison_command, stdout=log_file, stderr=log_file, shell=True)
+    proc.communicate()
 
     logging.info('Path fix command: %s', path_fix_command)
-    with Popen(path_fix_command, stdout=log_file, stderr=log_file, shell=True) as proc:
-        proc.communicate()
+    proc = Popen(path_fix_command, stdout=log_file, stderr=log_file, shell=True)
+    proc.communicate()
 
     logging.info('Compression command: %s', compression_command)
-    with Popen(compression_command, stdout=log_file, stderr=log_file, shell=True) as proc:
-        proc.communicate()
+    proc = Popen(compression_command, stdout=log_file, stderr=log_file, shell=True)
+    proc.communicate()
 
     logging.info('Move command: %s', move_command)
-    with Popen(move_command, stdout=log_file, stderr=log_file, shell=True) as proc:
-        proc.communicate()
+    proc = Popen(move_command, stdout=log_file, stderr=log_file, shell=True)
+    proc.communicate()
 
 
 def run_validation_matrix(relmon, cpus, callback_url):
