@@ -1,6 +1,5 @@
 <?php
 if (!isset($_SERVER["PATH_INFO"])) {
-  $authorizedUser = in_array('cms-ppd-pdmv-val-admin-pdmv', explode(';', strtolower($_SERVER['HTTP_ADFS_GROUP'])));
 ?>
   <!doctype html>
   <html lang="en">
@@ -41,11 +40,6 @@ if (!isset($_SERVER["PATH_INFO"])) {
         <div class="row card elevation-3">
           <div class="card-body" style="padding-bottom: 8px;">
             <ul>
-  <?php
-              if ($authorizedUser) {
-                print("<li><a target='_blank' href='https://cms-pdmv.cern.ch/relmonservice'>RelMon Service</a></li>");
-              }
-  ?>
               <li><a target='_blank' href="https://cmsweb.cern.ch/dqm/online">Link to the Online DQM GUI</a></li>
               <li><a target='_blank' href="https://cmsweb.cern.ch/dqm/offline">Link to the Offline DQM GUI</a></li>
               <li><a target='_blank' href="https://cmsweb.cern.ch/dqm/relval">Link to the RelVal DQM GUI</a></li>
@@ -78,6 +72,8 @@ if (!isset($_SERVER["PATH_INFO"])) {
             $relmons = array_filter($relmons, function($k) use ($regexQuery) {
               return preg_match($regexQuery, $k);
             });
+        } else {
+            $relmons = array_filter($relmons, function ($name) {return strpos($name, "RELMON_TEST") === false;});
         }
         usort($relmons, function($a, $b) { return filemtime($a) < filemtime($b); });
         $totalRelmons = count($relmons);
@@ -106,9 +102,6 @@ if (!isset($_SERVER["PATH_INFO"])) {
                   print("<span class=\"bigger-text\" id=\"$niceRelmonName\">$niceRelmonName</span><br>");
                   print("<span class=\"font-weight-light\">Created:</span> $lastModified</span><br>");
                   print("<span class=\"font-weight-light\">Size:</span> $size MB");
-                  if ($authorizedUser) {
-                    print("<br><br><a href=\"#\" onclick=\"deleteRelmon('$relmonName', '$niceRelmonName')\">Delete report</a>");
-                  }
   ?>
                 </div>
                 <div class="col-sm-12 col-md-4">
