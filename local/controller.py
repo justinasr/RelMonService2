@@ -8,6 +8,7 @@ import time
 import os.path
 import shutil
 import zipfile
+import json
 from multiprocessing import Manager
 from mongodb_database import Database
 from local.ssh_executor import SSHExecutor
@@ -22,10 +23,28 @@ class Controller():
     Performs ticks during which RelMons are deleted, reset, submitted
     and their status is checked (if they are running)
     """
-    def __init__(self, config):
+    def __init__(self):
         self.logger = logging.getLogger('logger')
         self.logger.info('***** Creating a controller! *****')
         self.is_tick_running = False
+        # Multithread manager
+        manager = Manager()
+        # Lists of relmon ids
+        self.relmons_to_reset = manager.list()
+        self.relmons_to_delete = manager.list()
+        self.config = None
+        self.remote_directory = 'relmon'
+        self.ssh_executor = None
+        self.file_creator = None
+        self.email_sender = None
+        self.service_url = 'localhost'
+        self.reports_url = 'localhost'
+
+    def set_config(self, config):
+        """
+        Take in a config and update all local variables
+        """
+        self.config = config
         self.remote_directory = config['remote_directory']
         if self.remote_directory[-1] == '/':
             self.remote_directory = self.remote_directory[:-1]
@@ -33,14 +52,8 @@ class Controller():
         self.ssh_executor = SSHExecutor(config)
         self.file_creator = FileCreator(config)
         self.email_sender = EmailSender(config)
-        self.config = config
         self.service_url = self.config['service_url']
         self.reports_url = self.config['reports_url']
-        # Multithread manager
-        manager = Manager()
-        # Lists of relmon ids
-        self.relmons_to_reset = manager.list()
-        self.relmons_to_delete = manager.list()
 
     def tick(self):
         """
@@ -153,6 +166,18 @@ class Controller():
         database.create_relmon(relmon)
         self.logger.info('Relmon %s was created', relmon)
 
+    def rename_relmon_reports(self, relmon_id, new_name):
+        """
+        Rename relmon reports file
+        """
+        ssh_executor = SSHExecutor(self.config)
+        ssh_executor.execute_command([
+            'cd %s' % (self.file_creator.web_location),
+            'EXISTING_REPORT=$(ls -1 %s*.sqlite | head -n 1)' % (relmon_id),
+            'echo "Existing file name: $EXISTING_REPORT"',
+            'mv "$EXISTING_REPORT" "%s___%s.sqlite"' % (relmon_id, new_name),
+        ])
+
     def edit_relmon(self, new_relmon, database, user_info):
         """
         Update relmon categories
@@ -168,56 +193,31 @@ class Controller():
             self.logger.info('Relmon %s have these categories: %s', new_relmon, new_category_names)
             categories_changed = False
             for category_name in set(new_category_names + old_category_names):
-                old_category = old_relmon.get_category(category_name)
-                new_category = new_relmon.get_category(category_name)
-                old_category_references = [x['name'] for x in old_category.get('reference', [])]
-                new_category_references = [x['name'] for x in new_category.get('reference', [])]
-                old_category_targets = [x['name'] for x in old_category.get('target', [])]
-                new_category_targets = [x['name'] for x in new_category.get('target', [])]
-                old_category_pairing = old_category.get('automatic_pairing')
-                new_category_pairing = new_category.get('automatic_pairing')
-                old_category_hlt = old_category.get('hlt')
-                new_category_hlt = new_category.get('hlt')
-                changed = False
-                changed = changed or old_category_references != new_category_references
-                changed = changed or old_category_targets != new_category_targets
-                changed = changed or old_category_pairing != new_category_pairing
-                changed = changed or old_category_hlt != new_category_hlt
-                categories_changed = categories_changed or changed
-                if changed:
+                old_category = old_relmon.get_bare_category(category_name)
+                new_category = new_relmon.get_bare_category(category_name)
+                old_category_string = json.dumps(old_category)
+                new_category_string = json.dumps(old_category)
+                if old_category_string != new_category_string:
                     self.logger.info('Category %s of %s changed', category_name, old_relmon)
-                    old_category['reference'] = new_category_references
-                    old_category['target'] = new_category_targets
-                    old_category['automatic_pairing'] = new_category_pairing
-                    old_category['hlt'] = new_category_hlt
+                    categories_changed = True
+                    old_category.update(new_category)
                     old_relmon.reset_category(category_name)
-                else:
-                    self.logger.info('Category %s of %s did not change', category_name, old_relmon)
 
             name_changed = old_relmon_data['name'] != new_relmon.get_name()
-            if name_changed and not categories_changed:
-                # Only name changed, categories did not change, just a rename
+            if name_changed or categories_changed:
                 new_name = new_relmon.get_name()
-                self.logger.info('Renaming %s to %s without changing categories',
-                                 old_relmon,
-                                 new_name)
-                old_relmon.get_json()['name'] = new_name
-                ssh_executor = SSHExecutor(self.config)
-                ssh_executor.execute_command([
-                    'cd %s' % (self.file_creator.web_location),
-                    'EXISTING_REPORT=$(ls -1 %s*.sqlite | head -n 1)' % (relmon_id),
-                    'echo "Existing file name: $EXISTING_REPORT"',
-                    'mv "$EXISTING_REPORT" "%s___%s.sqlite"' % (relmon_id, new_name),
-                ])
-                old_relmon.set_user_info(user_info)
-                database.update_relmon(old_relmon)
-            elif categories_changed:
-                # Categories changed, will have to resubmit
-                new_name = new_relmon.get_name()
-                old_relmon.get_json()['name'] = new_name
-                old_relmon.set_status('new')
-                old_relmon.set_condor_id(0)
-                old_relmon.set_condor_status('<unknown>')
+                if not categories_changed:
+                    # Only name changed, categories did not change, just a rename
+                    self.logger.info('Renaming %s to %s without changing categories',
+                                     old_relmon,
+                                     new_name)
+                    self.rename_relmon_reports(relmon_id, new_name)
+                else:
+                    # Categories changed, will have to resubmit
+                    # Reset relmon without resetting all categories
+                    old_relmon.reset(False)
+
+                old_relmon.set_name(new_name)
                 old_relmon.set_user_info(user_info)
                 database.update_relmon(old_relmon)
             else:
