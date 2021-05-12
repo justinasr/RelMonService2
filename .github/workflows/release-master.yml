@@ -7,7 +7,7 @@ on:
     - cron: "59 22 * * *"
 
 jobs:
-  # Check if new there were new commits in last 24 hours and save as "new_commits" variable
+  # Check if new there were new commits after the newest release tag and save as "new_commits" variable
   check_for_commits:
     name: Check for new commits
     runs-on: ubuntu-latest
@@ -20,14 +20,16 @@ jobs:
           branch_name=${GITHUB_REF##*/}
           latest_tag=$(git tag -l $branch_name-* | tail -n 1)
           latest_tag_hash=$(git rev-parse $latest_tag)
+          echo "Branch $branch_name"
           echo "Newest commit $latest_commit_hash"
           echo "Newest tag $latest_tag hash $latest_tag_hash"
+          test "$latest_commit_hash" = "$latest_tag_hash" && echo "No new commits"
 
       - name: Check if there are commits since last release tag
         id: newest_commit_check
         continue-on-error: true
         if: ${{ github.event_name == 'schedule' }}
-        run: test $latest_commit_hash = $latest_tag_hash && echo "::set-output name=new_commits::false"
+        run: test "$latest_commit_hash" = "$latest_tag_hash" && echo "::set-output name=new_commits::false"
 
     outputs:
       new_commits: ${{ steps.newest_commit_check.outputs.new_commits }}
@@ -45,6 +47,7 @@ jobs:
         branch_name=${GITHUB_REF##*/}
         release_timestamp=$(TZ=Europe/Paris date +%Y-%m-%d_%H-%M-%S)
         tag=$branch_name-$release_timestamp
+        echo "New tag $tag"
         echo "::set-output name=branch_name::$branch_name"
         echo "::set-output name=release_timestamp::$release_timestamp"
         echo "::set-output name=tag::$tag"
