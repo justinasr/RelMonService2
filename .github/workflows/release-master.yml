@@ -14,32 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get the newest and latest release hashes
+      - name: Get the newest hash and latest release hash
+        id: tag_and_commit_hash_chech
         run: |
           latest_commit_hash=${{ github.sha }}
           branch_name=${GITHUB_REF##*/}
+          git fetch --tags
           latest_tag=$(git tag -l $branch_name-* | tail -n 1)
           latest_tag_hash=$(git rev-parse $latest_tag)
           echo "Branch $branch_name"
           echo "Newest commit $latest_commit_hash"
           echo "Newest tag $latest_tag hash $latest_tag_hash"
-          test "$latest_commit_hash" = "$latest_tag_hash" && echo "No new commits"
-
-      - name: Check if there are commits since last release tag
-        id: newest_commit_check
-        continue-on-error: true
-        if: ${{ github.event_name == 'schedule' }}
-        run: test "$latest_commit_hash" = "$latest_tag_hash" && echo "::set-output name=new_commits::false"
-
+          if [ "$latest_commit_hash" = "$latest_tag_hash" ]; then
+            echo "Hashes are equal, no new commits"
+            echo "::set-output name=new_commits::false"
+          else
+            echo "Hashes differ, new commits"
+            echo "::set-output name=new_commits::true"
+          fi
     outputs:
-      new_commits: ${{ steps.newest_commit_check.outputs.new_commits }}
+      new_commits: ${{ steps.tag_and_commit_hash_chech.outputs.new_commits }}
 
   # Create a github release
   release:
     name: Create GitHub release
     runs-on: ubuntu-latest
     needs: [check_for_commits]
-    if: ${{ needs.check_for_commits.outputs.new_commits != 'false' }}
+    if: ${{ needs.check_for_commits.outputs.new_commits == 'true' }}
     steps:
     - name: Create tag
       id: create_tag
@@ -80,7 +81,7 @@ jobs:
   build:
     name: Build release
     needs: [check_for_commits, release]
-    if: ${{ needs.check_for_commits.outputs.new_commits != 'false' }}
+    if: ${{ needs.check_for_commits.outputs.new_commits == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v1
@@ -142,7 +143,7 @@ jobs:
   metadata:
     name: Publish release
     needs: [check_for_commits, build]
-    if: ${{ needs.check_for_commits.outputs.new_commits != 'false' }}
+    if: ${{ needs.check_for_commits.outputs.new_commits == 'true' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/download-artifact@v1
@@ -168,6 +169,6 @@ jobs:
       with:
         delete_tag_pattern: ${{ steps.publish_info.outputs.branch_name }}-
         delete_tags: true
-        keep_latest: 2
+        keep_latest: 3
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
