@@ -52,7 +52,7 @@ Each category has it's own status, pairing mode and HLT option:
   * **HLT** - only HLT, no HLT or Both (HLT and no HLT)
 
 #### References and targets
-Items in references and targets lists are workflow names from ReqMgr2, e.g. `pdmvserv_RVCMSSW_11_0_0_..._190915_164000_1993`. Number of items must be equal in references and targets lists of the same category. If there are no references and targets in a category, it will be ignored. For each category, each item in reference list is compared with one item in target list. Which one is compared with which depends on pairing mode.
+Items in references and targets lists are workflow names from ReqMgr2, e.g. `pdmvserv_RVCMSSW_11_0_0_..._190915_164000_1993` or DQMIO dataset names, e.g. `/RelValTTbar_14TeV/CMSSW_11_3_0_pre6-...-v1/DQMIO`. Number of items must be equal in references and targets lists of the same category. If there are no references and targets in a category, it will be ignored. For each category, each item in reference list is compared with one item in target list. Which one is compared with which depends on pairing mode.
 
 Each reference and target has it's own status:
   * **initial** - workflow is waiting to have it's DQMIO dataset downloaded

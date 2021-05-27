@@ -196,11 +196,11 @@ class Controller():
                 old_category = old_relmon.get_bare_category(category_name)
                 new_category = new_relmon.get_bare_category(category_name)
                 old_category_string = json.dumps(old_category)
-                new_category_string = json.dumps(old_category)
+                new_category_string = json.dumps(new_category)
                 if old_category_string != new_category_string:
                     self.logger.info('Category %s of %s changed', category_name, old_relmon)
                     categories_changed = True
-                    old_category.update(new_category)
+                    old_relmon.get_category(category_name).update(new_category)
                     old_relmon.reset_category(category_name)
 
             name_changed = old_relmon_data['name'] != new_relmon.get_name()
@@ -292,7 +292,7 @@ class Controller():
                 'module load lxbatch/tzero && condor_submit RELMON_%s.sub' % (relmon_id)
             ])
             # Parse result of condor_submit
-            if not stderr and '1 job(s) submitted to cluster' in stdout:
+            if stdout and '1 job(s) submitted to cluster' in stdout:
                 # output is "1 job(s) submitted to cluster 801341"
                 relmon.set_status('submitted')
                 condor_id = int(float(stdout.split()[-1]))

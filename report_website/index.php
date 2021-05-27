@@ -29,7 +29,7 @@ if (!isset($_SERVER["PATH_INFO"])) {
     <body>
       <header class="v-sheet v-sheet--tile theme--light v-toolbar v-app-bar v-app-bar--fixed elevation-3" data-booted="true" style="height: 64px; margin-top: 0px; transform: translateY(0px); left: 0px; right: 0px; position: fixed; z-index: 999;">
         <div class="v-toolbar__content" style="height: 64px;">
-          <a href="/pdmv-new-relmon/" style="text-decoration: none; color: rgba(0, 0, 0, 0.87);">
+          <a href="/relmon/" style="text-decoration: none; color: rgba(0, 0, 0, 0.87);">
             <div class="headline">
               <span>RelMon</span><span class="font-weight-light">Reports</span>
             </div>
