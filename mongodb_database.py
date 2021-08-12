@@ -15,38 +15,38 @@ class Database:
     It encapsulates underlying connection and exposes some convenience methods
     """
     PAGE_SIZE = 10
-    __DATABASE_HOST = 'localhost'
-    __DATABASE_PORT = 27017
-    __DATABASE_NAME = 'relmons'
-    __COLLECTION_NAME = 'relmons'
-    __USERNAME = None
-    __PASSWORD = None
+    DATABASE_HOST = 'localhost'
+    DATABASE_PORT = 27017
+    DATABASE_NAME = 'relmons'
+    COLLECTION_NAME = 'relmons'
+    USERNAME = None
+    PASSWORD = None
 
     def __init__(self):
         self.logger = logging.getLogger('logger')
-        db_host = os.environ.get('DB_HOST', Database.__DATABASE_HOST)
-        db_port = os.environ.get('DB_PORT', Database.__DATABASE_PORT)
-        if Database.__USERNAME and Database.__PASSWORD:
+        db_host = os.environ.get('DB_HOST', Database.DATABASE_HOST)
+        db_port = os.environ.get('DB_PORT', Database.DATABASE_PORT)
+        if Database.USERNAME and Database.PASSWORD:
             self.logger.debug('Using DB with username and password')
             self.client = MongoClient(db_host,
                                       db_port,
-                                      username=Database.__USERNAME,
-                                      password=Database.__PASSWORD,
+                                      username=Database.USERNAME,
+                                      password=Database.PASSWORD,
                                       authSource='admin',
-                                      authMechanism='SCRAM-SHA-256')[Database.__DATABASE_NAME]
+                                      authMechanism='SCRAM-SHA-256')[Database.DATABASE_NAME]
         else:
             self.logger.debug('Using DB without username and password')
-            self.client = MongoClient(db_host, db_port)[Database.__DATABASE_NAME]
+            self.client = MongoClient(db_host, db_port)[Database.DATABASE_NAME]
 
-        self.relmons = self.client[self.__COLLECTION_NAME]
+        self.relmons = self.client[self.COLLECTION_NAME]
 
     @classmethod
     def set_credentials(cls, username, password):
         """
         Set database username and password
         """
-        cls.__USERNAME = username
-        cls.__PASSWORD = password
+        cls.USERNAME = username
+        cls.PASSWORD = password
 
     @classmethod
     def set_credentials_file(cls, filename):
