@@ -20,7 +20,7 @@ class RelMon():
             new_references = []
             for old_reference in category['reference']:
                 if isinstance(old_reference, str):
-                    name = RelMon.sanitize_relval(old_reference)
+                    name = RelMon.sanitize_name(old_reference)
                     if not name:
                         continue
 
@@ -32,7 +32,7 @@ class RelMon():
                                            'events': 0,
                                            'match': ''})
                 else:
-                    name = RelMon.sanitize_relval(old_reference['name'])
+                    name = RelMon.sanitize_name(old_reference['name'])
                     if not name:
                         continue
 
@@ -47,7 +47,7 @@ class RelMon():
             new_targets = []
             for old_target in category['target']:
                 if isinstance(old_target, str):
-                    name = RelMon.sanitize_relval(old_target)
+                    name = RelMon.sanitize_name(old_target)
                     if not name:
                         continue
 
@@ -59,7 +59,7 @@ class RelMon():
                                         'events': 0,
                                         'match': ''})
                 else:
-                    name = RelMon.sanitize_relval(old_target['name'])
+                    name = RelMon.sanitize_name(old_target['name'])
                     if not name:
                         continue
 
@@ -73,13 +73,6 @@ class RelMon():
 
             category['reference'] = new_references
             category['target'] = new_targets
-
-    @staticmethod
-    def sanitize_relval(name):
-        """
-        Replace all non letters, digits, hyphens and underscores with underscore
-        """
-        return re.sub(r'[^A-Za-z0-9/\-_]', '_', name.strip())
 
     @staticmethod
     def sanitize_name(name):
@@ -97,9 +90,9 @@ class RelMon():
         new_references = []
         for old_reference in category['reference']:
             if isinstance(old_reference, str):
-                name = RelMon.sanitize_relval(old_reference.strip())
+                name = RelMon.sanitize_name(old_reference.strip())
             else:
-                name = RelMon.sanitize_relval(old_reference['name'].strip())
+                name = RelMon.sanitize_name(old_reference['name'].strip())
 
             if not name:
                 continue
@@ -115,9 +108,9 @@ class RelMon():
         new_targets = []
         for old_target in category['target']:
             if isinstance(old_target, str):
-                name = RelMon.sanitize_relval(old_target.strip())
+                name = RelMon.sanitize_name(old_target.strip())
             else:
-                name = RelMon.sanitize_relval(old_target['name'].strip())
+                name = RelMon.sanitize_name(old_target['name'].strip())
 
             if not name:
                 continue
