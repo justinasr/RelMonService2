@@ -70,6 +70,9 @@ Items in references and targets lists can be paired either automatically or manu
 #### HLT
 There are three options for HLT: No HLT, Only HLT and Both. This option controls `--HLT` flag of `ValidationMatrix.py`. "No HLT" will run `ValidationMatrix.py` only once for that category without `--HLT` flag. "Only HLT" will run only once for that category with the flag. "Both" will run `ValidationMatrix.py` twice for that category - once with `--HLT` flag and then without it.
 
+#### Force re-run
+If RelMon is done, each category will have an option option to "Force re-run" the category without changing anything in it. This allows to retry comparison of that cateogry without changing anything
+
 #### Resource requirements in HTCondor
 Resource requirements in HTCondor job are based on RelMon size. If total number of references and targets of all categories are:
  * **≤ 10 (up to 5 vs 5)** - 1 core, 2GB memory
@@ -103,6 +106,7 @@ It is possible to edit a RelMon while it is still running or when it is done. If
  * If RelMon is "done" and references, targets, pairing and/or HLT is changed in a category, only that category will be redone, other categories will be untouched
  * If RelMon is "done" and workflows are added to an empty category, only that category will be done and added to RelMon report in reports page
  * If RelMon is "done" and all workflows are removed from a category, that category will be removed from RelMon report in reports page
+ * If RelMon is "done" and "Force re-run" of category is selected, only that category will be redone, other categories will be untouched
 
 RelMon can be edited by clicking Edit button at the bottom of RelMon.
 

@@ -197,7 +197,8 @@ class Controller():
                 new_category = new_relmon.get_bare_category(category_name)
                 old_category_string = json.dumps(old_category)
                 new_category_string = json.dumps(new_category)
-                if old_category_string != new_category_string:
+                force_rerun = new_relmon.get_category(category_name).get('rerun', False)
+                if force_rerun or old_category_string != new_category_string:
                     self.logger.info('Category %s of %s changed', category_name, old_relmon)
                     categories_changed = True
                     old_relmon.get_category(category_name).update(new_category)

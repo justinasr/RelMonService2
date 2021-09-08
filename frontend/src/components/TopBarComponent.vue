@@ -50,7 +50,10 @@
                         {{category.name}} <span class="font-weight-light">targets:</span><br>
                         <textarea class="thin-border" v-model="category.target"></textarea>
                       </v-col>
-                      <v-col cols=12 sm=12 md=6 lg=6>
+                      <v-col cols=12
+                             sm=12
+                             :md="(isEditing && relmonWrapper.relmon.status == 'done' ? 4 : 6)"
+                             :lg="(isEditing && relmonWrapper.relmon.status == 'done' ? 4 : 6)">
                         <span class="font-weight-light mr-2">Pairing:</span>
                         <v-btn-toggle mandatory v-model="category.automatic_pairing" class="radio-buttons">
                           <v-btn small :value="true">
@@ -61,7 +64,10 @@
                           </v-btn>
                         </v-btn-toggle>
                       </v-col>
-                      <v-col cols=12 sm=12 md=6 lg=6>
+                      <v-col cols=12
+                             sm=12
+                             :md="(isEditing && relmonWrapper.relmon.status == 'done' ? 4 : 6)"
+                             :lg="(isEditing && relmonWrapper.relmon.status == 'done' ? 4 : 6)">
                         <span class="font-weight-light mr-2">HLT:</span>
                         <v-btn-toggle mandatory v-model="category.hlt" class="radio-buttons">
                           <v-btn small :value="'no'">
@@ -72,6 +78,17 @@
                           </v-btn>
                           <v-btn small :value="'both'" :disabled="category.name === 'Generator'">
                             Both
+                          </v-btn>
+                        </v-btn-toggle>
+                      </v-col>
+                      <v-col v-if="isEditing && relmonWrapper.relmon.status == 'done'" cols=12 sm=12 md=4 lg=4>
+                        <span class="font-weight-light mr-2">Force re-run:</span>
+                        <v-btn-toggle mandatory v-model="category.rerun" class="radio-buttons">
+                          <v-btn small :value="false">
+                            No
+                          </v-btn>
+                          <v-btn small :value="true">
+                            Yes
                           </v-btn>
                         </v-btn-toggle>
                       </v-col>
@@ -229,6 +246,7 @@ export default {
           item['name'] = item['name'].replace('_', ' ')
           item['reference'] = item['reference'].map(x => x['name'].replace(/\s/g, "")).filter(Boolean).join('\n')
           item['target'] = item['target'].map(x => x['name'].replace(/\s/g, "")).filter(Boolean).join('\n')
+          item['rerun'] = false
         })
         this.isEditing = true;
         relmonClone['categories'] = this.addMissingCategories(relmonClone.categories);
@@ -254,7 +272,8 @@ export default {
                            'hlt': item === 'Generator' ? 'no' : 'both',
                            'automatic_pairing': true,
                            'reference':'',
-                           'target': ''})
+                           'target': '',
+                           'rerun': false})
         }
       })
       let component = this
