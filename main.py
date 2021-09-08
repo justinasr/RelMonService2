@@ -141,6 +141,7 @@ def get_relmons():
         for category in relmon.get('categories'):
             relmon['total_relvals'] += len(category['reference']) + len(category['target'])
             for reference_target in ('reference', 'target'):
+                category['rerun'] = False
                 category['%s_status' % (reference_target)] = {}
                 category['%s_size' % (reference_target)] = 0
                 for relval in category[reference_target]:
