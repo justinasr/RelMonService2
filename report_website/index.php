@@ -99,7 +99,7 @@ if (!isset($_SERVER["PATH_INFO"])) {
                   $explodedRelmonName = explode("___", $relmonName);
                   array_shift($explodedRelmonName);
                   $niceRelmonName = join("___", $explodedRelmonName);
-                  print("<span class=\"bigger-text\" id=\"$niceRelmonName\">$niceRelmonName</span><br>");
+                  print("<a href=\"?q=$niceRelmonName\" class=\"bigger-text\" id=\"$niceRelmonName\">$niceRelmonName</a><br>");
                   print("<span class=\"font-weight-light\">Created:</span> $lastModified</span><br>");
                   print("<span class=\"font-weight-light\">Size:</span> $size MB");
   ?>
