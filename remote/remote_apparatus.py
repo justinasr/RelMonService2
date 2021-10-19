@@ -393,6 +393,8 @@ def compare_compress_move(category_name, hlt, reference_list, target_list, cpus,
     # Remove all /cms-service-reldqm/style/blueprint/ from HTML files
     path_fix_command = ("find %s/ -type f -name '*.html' |xargs -L1 "
                         "sed -i -e 's#/cms-service-reldqm/style/blueprint/##g'" % (subreport_path))
+    img_src_fix_command = ("find %s/ -type f -name '*.html' |xargs -L1 "
+                           "sed -i -e 's#http://cmsweb.cern.ch//dqm#https://cmsweb.cern.ch/dqm#g'" % (subreport_path))
     compression_command = ' '.join(['dir2webdir.py', subreport_path])
     move_command = ' '.join(['mv', subreport_path, 'Reports/'])
 
@@ -402,6 +404,10 @@ def compare_compress_move(category_name, hlt, reference_list, target_list, cpus,
 
     logging.info('Path fix command: %s', path_fix_command)
     proc = Popen(path_fix_command, stdout=log_file, stderr=log_file, shell=True)
+    proc.communicate()
+
+    logging.info('<img> src fix command: %s', img_src_fix_command)
+    proc = Popen(img_src_fix_command, stdout=log_file, stderr=log_file, shell=True)
     proc.communicate()
 
     logging.info('Compression command: %s', compression_command)
