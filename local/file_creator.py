@@ -31,6 +31,7 @@ class FileCreator():
         script_file_content = [
             '#!/bin/bash',
             'DIR=$(pwd)',
+            'export HOME=$(pwd)',
             # Clone the relmon service
             'git clone https://github.com/cms-PdmV/relmonservice2.git',
             # Fallback for github hiccups
@@ -50,6 +51,9 @@ class FileCreator():
             '(',
             'eval `scramv1 runtime -sh`',
             # Temporary hack for empty directories
+            'git config --global user.name "Nope"',
+            'git config --global user.email "nope@nope.com"',
+            'git config --global user.github "No"',
             'WORK_DIR=$DIR/relmonservice2/remote',
             'git cms-addpkg Utilities/RelMon',
             'cp $WORK_DIR/dqm_interfaces.py Utilities/RelMon/python/dqm_interfaces.py',
