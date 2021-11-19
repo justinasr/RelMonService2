@@ -32,10 +32,10 @@ class FileCreator():
             '#!/bin/bash',
             'DIR=$(pwd)',
             # Clone the relmon service
-            'git clone https://github.com/justinasr/relmonservice2.git',
+            'git clone https://github.com/cms-PdmV/relmonservice2.git',
             # Fallback for github hiccups
             'if [ ! -d relmonservice2 ]; then',
-            '  wget https://github.com/justinasr/RelmonService2/archive/master.zip',
+            '  wget https://github.com/cms-PdmV/RelmonService2/archive/master.zip',
             '  unzip master.zip',
             '  mv RelmonService2-master relmonservice2',
             'fi',
@@ -48,6 +48,12 @@ class FileCreator():
             'cd CMSSW_11_0_0/src',
             # Open scope for CMSSW
             '(',
+            'eval `scramv1 runtime -sh`',
+            # Temporary hack for empty directories
+            'WORK_DIR=$DIR/relmonservice2/remote'
+            'git cms-addpkg Utilities/RelMon',
+            'cp $WORK_DIR/dqm_interfaces.py Utilities/RelMon/python/dqm_interfaces.py',
+            'scram b -j',
             'eval `scramv1 runtime -sh`',
             'cd ../..',
             # Create reports directory
