@@ -50,7 +50,7 @@ class FileCreator():
             '(',
             'eval `scramv1 runtime -sh`',
             # Temporary hack for empty directories
-            'WORK_DIR=$DIR/relmonservice2/remote'
+            'WORK_DIR=$DIR/relmonservice2/remote',
             'git cms-addpkg Utilities/RelMon',
             'cp $WORK_DIR/dqm_interfaces.py Utilities/RelMon/python/dqm_interfaces.py',
             'scram b -j',
