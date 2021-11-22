@@ -45,7 +45,7 @@ class FileCreator():
             'cp cookie.txt relmonservice2/remote',
             # CMSSW environment setup
             'source /cvmfs/cms.cern.ch/cmsset_default.sh',
-            'scramv1 project CMSSW CMSSW_11_0_0',
+            'scramv1 project CMSSW CMSSW_11_0_4',
             'cd CMSSW_11_0_4/src',
             # Open scope for CMSSW
             '(',
