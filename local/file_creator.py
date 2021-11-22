@@ -46,18 +46,9 @@ class FileCreator():
             # CMSSW environment setup
             'source /cvmfs/cms.cern.ch/cmsset_default.sh',
             'scramv1 project CMSSW CMSSW_11_0_0',
-            'cd CMSSW_11_0_0/src',
+            'cd CMSSW_11_0_4/src',
             # Open scope for CMSSW
             '(',
-            'eval `scramv1 runtime -sh`',
-            # Temporary hack for empty directories
-            'git config --global user.name "Nope"',
-            'git config --global user.email "nope@nope.com"',
-            'git config --global user.github "No"',
-            'WORK_DIR=$DIR/relmonservice2/remote',
-            'git cms-addpkg Utilities/RelMon',
-            'cp $WORK_DIR/dqm_interfaces.py Utilities/RelMon/python/dqm_interfaces.py',
-            'scram b -j',
             'eval `scramv1 runtime -sh`',
             'cd ../..',
             # Create reports directory
