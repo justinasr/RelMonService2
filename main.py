@@ -7,6 +7,7 @@ import json
 import configparser
 import os
 import time
+import inspect
 from datetime import datetime
 from flask import Flask, render_template, request, make_response
 from flask_restful import Api
@@ -247,6 +248,29 @@ def user_info():
     API for user info
     """
     return output_text(user_info_dict())
+
+
+@app.route('/api', defaults={'_path': ''})
+@app.route('/api/<path:_path>')
+def api_documentation(_path):
+    """
+    Endpoint for API documentation HTML
+    """
+    docs = {}
+    base = os.path.dirname(os.path.realpath(__file__))
+    for rule in app.url_map.iter_rules():
+        endpoint = rule.rule
+        func = app.view_functions[rule.endpoint]
+        methods = sorted(list(rule.methods & {'GET', 'PUT', 'POST', 'DELETE'}))
+        if not methods or 'api' not in endpoint:
+            continue
+
+        docs[endpoint] = {'doc': func.__doc__.strip(),
+                          'methods': methods,
+                          'file': inspect.getfile(func).replace(base, '').strip('/'),
+                          'line': inspect.getsourcelines(func)[1]}
+
+    return render_template('api_documentation.html', docs=docs)
 
 
 def user_info_dict():

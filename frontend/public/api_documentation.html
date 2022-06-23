@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base href="/relmonservice/">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="static/favicon.png">
+    <title>RelmonService API</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
+    <style>
+      body {
+        font-family: "Roboto", sans-serif;
+        color: rgba(0, 0, 0, 0.87);
+        font-size: 14px;
+      }
+      a {
+        color: rgb(25, 118, 210);
+      }
+      pre {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <ul>
+      {% for (endpoint, endpoint_dict) in docs.items() %}
+        <li style="margin: 12px;">{{endpoint_dict.doc}}
+          (<a href="https://github.com/cms-PdmV/RelMonService2/blob/master/{{endpoint_dict.file}}#L{{endpoint_dict.line}}">source</a>)
+          <pre>[{{','.join(endpoint_dict.methods)}}] <b>{{endpoint}}</b></pre>
+        </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
