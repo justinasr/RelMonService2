@@ -119,6 +119,9 @@ class Controller():
                          ', '.join(r.get('id') for r in relmons_to_submit))
         for relmon_json in relmons_to_submit:
             relmon = RelMon(relmon_json)
+            if 'NOSUBMIT' in relmon.get_name():
+                continue
+
             status = relmon.get_status()
             if status == 'new':
                 # Double check and if it is new, submit it
