@@ -1,0 +1,20 @@
+# Ignore the following files for image building
+.github/
+logs/
+venv/
+frontend/node_modules/
+frontend/dist/
+
+# Append the config file via secret files
+# or environment files
+config.cfg
+
+# Ignore Python cache
+__pycache__/
+
+# Ignore Docker Compose files
+relmonservice.yaml
+
+relmonsvc.sh
+*.pid
+
