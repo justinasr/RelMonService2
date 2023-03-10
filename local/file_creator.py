@@ -4,19 +4,22 @@ Module for FileCreator
 import json
 
 
-class FileCreator():
+class FileCreator:
     """
     File creator creates bash executable for condor and condor submission job file
     """
 
     def __init__(self, config):
-        self.remote_location = config['remote_directory']
-        self.web_location = config['web_location']
-        if self.web_location[-1] == '/':
+        self.remote_location = config["remote_directory"]
+        self.web_location = config["web_location"]
+        if self.web_location[-1] == "/":
             self.web_location = self.web_location[:-1]
 
-        self.cookie_url = config['service_url']
-        self.callback_url = config['callback_url']
+        self.cookie_url = config["service_url"]
+        self.callback_url = config["callback_url"]
+        self.oauth_heartbeat_client_id = config["oauth_heartbeat_client_id"]
+        self.oauth_heartbeat_client_secret = config["oauth_heartbeat_client_secret"]
+        self.audience = config["oidc_client_id"]
 
     def create_job_script_file(self, relmon):
         """
@@ -25,90 +28,106 @@ class FileCreator():
         relmon_id = relmon.get_id()
         cpus = relmon.get_cpu()
         relmon_name = relmon.get_name()
-        script_file_name = 'relmons/%s/RELMON_%s.sh' % (relmon_id, relmon_id)
-        old_web_sqlite_path = '%s/%s*.sqlite' % (self.web_location, relmon_id)
-        web_sqlite_path = '"%s/%s___%s.sqlite"' % (self.web_location, relmon_id, relmon_name)
+        script_file_name = "relmons/%s/RELMON_%s.sh" % (relmon_id, relmon_id)
+        old_web_sqlite_path = "%s/%s*.sqlite" % (self.web_location, relmon_id)
+        web_sqlite_path = '"%s/%s___%s.sqlite"' % (
+            self.web_location,
+            relmon_id,
+            relmon_name,
+        )
         script_file_content = [
-            '#!/bin/bash',
-            'DIR=$(pwd)',
-            'export HOME=$(pwd)',
+            "#!/bin/bash",
+            "DIR=$(pwd)",
+            "export HOME=$(pwd)",
             # Clone the relmon service
-            'git clone https://github.com/cms-PdmV/relmonservice2.git',
+            "git clone https://github.com/cms-PdmV/relmonservice2.git",
             # Fallback for github hiccups
-            'if [ ! -d relmonservice2 ]; then',
-            '  wget https://github.com/cms-PdmV/RelmonService2/archive/master.zip',
-            '  unzip master.zip',
-            '  mv RelmonService2-master relmonservice2',
-            'fi',
-            # Make a cookie for callbacks about progress
-            'cern-get-sso-cookie -u %s -o cookie.txt' % (self.cookie_url),
-            'cp cookie.txt relmonservice2/remote',
+            "if [ ! -d relmonservice2 ]; then",
+            "  wget https://github.com/cms-PdmV/RelmonService2/archive/master.zip",
+            "  unzip master.zip",
+            "  mv RelmonService2-master relmonservice2",
+            "fi",
             # CMSSW environment setup
-            'source /cvmfs/cms.cern.ch/cmsset_default.sh',
-            'scramv1 project CMSSW CMSSW_11_0_4',
-            'cd CMSSW_11_0_4/src',
+            "source /cvmfs/cms.cern.ch/cmsset_default.sh",
+            "scramv1 project CMSSW CMSSW_11_0_4",
+            "cd CMSSW_11_0_4/src",
             # Open scope for CMSSW
-            '(',
-            'eval `scramv1 runtime -sh`',
-            'cd ../..',
+            "(",
+            "eval `scramv1 runtime -sh`",
+            "cd ../..",
             # Create reports directory
-            'mkdir -p Reports',
+            "mkdir -p Reports",
             # Run the remote apparatus
-            'python relmonservice2/remote/remote_apparatus.py '  # No newline
-            '-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s' % (relmon_id,
-                                                                        cpus,
-                                                                        self.callback_url),
+            "python3 relmonservice2/remote/remote_apparatus.py "  # No newline
+            "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s"
+            "-oci %s -ocs %s -aud %s"
+            % (
+                relmon_id,
+                cpus,
+                self.callback_url,
+                self.oauth_heartbeat_client_id,
+                self.oauth_heartbeat_client_secret,
+                self.audience,
+            ),
             # Close scope for CMSSW
-            ')',
-            'cd $DIR',
+            ")",
+            "cd $DIR",
             # Remove all root files
-            'rm *.root',
+            "rm *.root",
             # Copy sqlitify to Reports directory
-            'cp relmonservice2/remote/sqltify.py Reports/sqltify.py',
+            "cp relmonservice2/remote/sqltify.py Reports/sqltify.py",
             # Go to reports directory
-            'cd Reports',
+            "cd Reports",
             # Try to copy existing reports file
-            'EXISTING_REPORT=$(ls -1 %s | head -n 1)' % (old_web_sqlite_path),
+            "EXISTING_REPORT=$(ls -1 %s | head -n 1)" % (old_web_sqlite_path),
             'echo "Existing file name: $EXISTING_REPORT"',
             'if [ ! -z "$EXISTING_REPORT" ]; then',
             '  echo "File exists"',
             '  time rsync -v "$EXISTING_REPORT" reports.sqlite',
-            'fi',
+            "fi",
             # Run sqltify
-            'python3 sqltify.py',
+            "python3 sqltify.py",
             # Checksum for created sqlite
             'echo "HTCondor workspace"',
             'echo "MD5 Sum"',
-            'md5sum reports.sqlite',
+            "md5sum reports.sqlite",
             # List sizes
-            'ls -l reports.sqlite',
+            "ls -l reports.sqlite",
             # Do integrity check
             'echo "Integrity check:"',
             'echo "PRAGMA integrity_check;" | sqlite3 reports.sqlite',
             # Remove old sql file from web path
             'if [ ! -z "$EXISTING_REPORT" ]; then',
             '  rm -f "$EXISTING_REPORT"',
-            'fi',
+            "fi",
             # Copy reports sqlite to web path
-            'time rsync -v reports.sqlite %s' % (web_sqlite_path),
+            "time rsync -v reports.sqlite %s" % (web_sqlite_path),
             # Checksum for created sqlite
             'echo "EOS space"',
             'echo "MD5 Sum"',
-            'md5sum %s' % (web_sqlite_path),
+            "md5sum %s" % (web_sqlite_path),
             # List sizes
-            'ls -l %s' % (web_sqlite_path),
+            "ls -l %s" % (web_sqlite_path),
             # Do integrity check
             'echo "Integrity check:"',
             'echo "PRAGMA integrity_check;" | sqlite3 %s' % (web_sqlite_path),
-            'cd $DIR',
-            'cern-get-sso-cookie -u %s -o cookie.txt' % (self.cookie_url),
-            'cp cookie.txt relmonservice2/remote',
-            'python3 relmonservice2/remote/remote_apparatus.py '  # No newlines here
-            '-r RELMON_%s.json --callback %s --notifydone' % (relmon_id, self.callback_url)
+            "cd $DIR",
+            # Run the remote apparatus
+            "python3 relmonservice2/remote/remote_apparatus.py "  # No newline
+            "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s"
+            "-oci %s -ocs %s -aud %s"
+            % (
+                relmon_id,
+                cpus,
+                self.callback_url,
+                self.oauth_heartbeat_client_id,
+                self.oauth_heartbeat_client_secret,
+                self.audience,
+            ),
         ]
 
-        script_file_content_string = '\n'.join(script_file_content)
-        with open(script_file_name, 'w') as output_file:
+        script_file_content_string = "\n".join(script_file_content)
+        with open(script_file_name, "w") as output_file:
             output_file.write(script_file_content_string)
 
     @classmethod
@@ -118,8 +137,8 @@ class FileCreator():
         """
         relmon_id = relmon.get_id()
         relmon_data = relmon.get_json()
-        relmon_file_name = 'relmons/%s/RELMON_%s.json' % (relmon_id, relmon_id)
-        with open(relmon_file_name, 'w') as output_file:
+        relmon_file_name = "relmons/%s/RELMON_%s.json" % (relmon_id, relmon_id)
+        with open(relmon_file_name, "w") as output_file:
             json.dump(relmon_data, output_file, indent=2, sort_keys=True)
 
     @classmethod
@@ -131,27 +150,27 @@ class FileCreator():
         cpus = relmon.get_cpu()
         memory = relmon.get_memory()
         disk = relmon.get_disk()
-        condor_file_name = 'relmons/%s/RELMON_%s.sub' % (relmon_id, relmon_id)
+        condor_file_name = "relmons/%s/RELMON_%s.sub" % (relmon_id, relmon_id)
         condor_file_content = [
-            'executable             = RELMON_%s.sh' % (relmon_id),
-            'output                 = RELMON_%s.out' % (relmon_id),
-            'error                  = RELMON_%s.err' % (relmon_id),
-            'log                    = RELMON_%s.log' % (relmon_id),
-            'transfer_input_files   = RELMON_%s.json,proxy.txt' % (relmon_id),
-            'when_to_transfer_output = on_exit',
-            'request_cpus           = %s' % (cpus),
-            'request_memory         = %s' % (memory),
-            'request_disk           = %s' % (disk),
+            "executable             = RELMON_%s.sh" % (relmon_id),
+            "output                 = RELMON_%s.out" % (relmon_id),
+            "error                  = RELMON_%s.err" % (relmon_id),
+            "log                    = RELMON_%s.log" % (relmon_id),
+            "transfer_input_files   = RELMON_%s.json,proxy.txt" % (relmon_id),
+            "when_to_transfer_output = on_exit",
+            "request_cpus           = %s" % (cpus),
+            "request_memory         = %s" % (memory),
+            "request_disk           = %s" % (disk),
             '+JobFlavour            = "tomorrow"',
-            '+JobPrio               = 100',
+            "+JobPrio               = 100",
             'requirements           = (OpSysAndVer =?= "CentOS7")',
             # Leave in queue when status is DONE for two hours - 7200 seconds
-            'leave_in_queue         = JobStatus == 4 && (CompletionDate =?= UNDEFINED'
-            '                         || ((CurrentTime - CompletionDate) < 7200))',
+            "leave_in_queue         = JobStatus == 4 && (CompletionDate =?= UNDEFINED"
+            "                         || ((CurrentTime - CompletionDate) < 7200))",
             '+AccountingGroup       = "group_u_CMS.CAF.PHYS"',
-            'queue'
+            "queue",
         ]
 
-        condor_file_content_string = '\n'.join(condor_file_content)
-        with open(condor_file_name, 'w') as output_file:
+        condor_file_content_string = "\n".join(condor_file_content)
+        with open(condor_file_name, "w") as output_file:
             output_file.write(condor_file_content_string)
