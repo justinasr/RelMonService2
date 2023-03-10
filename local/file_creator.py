@@ -19,7 +19,7 @@ class FileCreator:
         self.callback_url = config["callback_url"]
         self.oauth_heartbeat_client_id = config["oauth_heartbeat_client_id"]
         self.oauth_heartbeat_client_secret = config["oauth_heartbeat_client_secret"]
-        self.audience = config["oidc_client_id"]
+        self.audience = config["oauth_heartbeat_client_id"]
 
     def create_job_script_file(self, relmon):
         """
