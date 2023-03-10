@@ -372,6 +372,8 @@ def get_config(mode):
             "oidc_client_id",
             "oidc_client_secret",
             "secret_key",
+            "oauth_heartbeat_client_id",
+            "oauth_heartbeat_client_secret",
         ):
             logging.info("  %s: ******", key)
         else:
@@ -429,12 +431,14 @@ def set_app(mode: str = "dev", debug: bool = True) -> tuple[str, int, bool]:
     # Instantiate the auth middleware
     logger.info("Creating authetication middleware")
     oidc_client_id = config.get("oidc_client_id")
+    oauth_heartbeat_client_id = config.get("oauth_heartbeat_client_id")
     oidc_client_secret = config.get("oidc_client_secret")
     auth = AuthenticationMiddleware(
         app=app,
         client_id=oidc_client_id,
         client_secret=oidc_client_secret,
         home_endpoint="index_page",
+        valid_audiences=[oidc_client_id, oauth_heartbeat_client_id],
     )
     logger.info("Authentication middleware: %s", auth)
 
