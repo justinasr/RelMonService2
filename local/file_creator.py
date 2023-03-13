@@ -2,6 +2,8 @@
 Module for FileCreator
 """
 import json
+import os
+from functools import partial
 
 
 class FileCreator:
@@ -17,9 +19,28 @@ class FileCreator:
 
         self.cookie_url = config["service_url"]
         self.callback_url = config["callback_url"]
-        self.oauth_heartbeat_client_id = config["oauth_heartbeat_client_id"]
-        self.oauth_heartbeat_client_secret = config["oauth_heartbeat_client_secret"]
-        self.audience = config["oauth_heartbeat_client_id"]
+        self.oauth_client_id = config["oauth_client_id"]
+        self.oauth_client_secret = config["oauth_client_secret"]
+        self.oauth_audience = config.get("oauth_audience", self.oauth_client_id)
+
+    def create_oauth_credentials_file(self, relmon):
+        """
+        Dump OAuth application credentials to a JSON file
+        """
+        relmon_id = relmon.get_id()
+        credentials_file_name = "relmons/%s/oauth.json" % (relmon_id)
+        data = {
+            "client_id": self.oauth_client_id,
+            "client_secret": self.oauth_client_secret,
+            "audience": self.oauth_audience,
+        }
+        with open(
+            credentials_file_name,
+            mode="w",
+            encoding="utf-8",
+            opener=partial(os.open, mode=0o400),
+        ) as output_file:
+            json.dump(data, output_file, indent=2, sort_keys=True)
 
     def create_job_script_file(self, relmon):
         """
@@ -59,15 +80,12 @@ class FileCreator:
             "mkdir -p Reports",
             # Run the remote apparatus
             "python3 relmonservice2/remote/remote_apparatus.py "  # No newline
-            "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s"
-            "-oci %s -ocs %s -aud %s"
+            "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s "
+            "--oauth oauth.json"
             % (
                 relmon_id,
                 cpus,
                 self.callback_url,
-                self.oauth_heartbeat_client_id,
-                self.oauth_heartbeat_client_secret,
-                self.audience,
             ),
             # Close scope for CMSSW
             ")",
@@ -114,15 +132,12 @@ class FileCreator:
             "cd $DIR",
             # Run the remote apparatus
             "python3 relmonservice2/remote/remote_apparatus.py "  # No newline
-            "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s"
-            "-oci %s -ocs %s -aud %s"
+            "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s "
+            "--oauth oauth.json"
             % (
                 relmon_id,
                 cpus,
                 self.callback_url,
-                self.oauth_heartbeat_client_id,
-                self.oauth_heartbeat_client_secret,
-                self.audience,
             ),
         ]
 
@@ -156,7 +171,8 @@ class FileCreator:
             "output                 = RELMON_%s.out" % (relmon_id),
             "error                  = RELMON_%s.err" % (relmon_id),
             "log                    = RELMON_%s.log" % (relmon_id),
-            "transfer_input_files   = RELMON_%s.json,proxy.txt" % (relmon_id),
+            "transfer_input_files   = RELMON_%s.json,proxy.txt,oauth.json"
+            % (relmon_id),
             "when_to_transfer_output = on_exit",
             "request_cpus           = %s" % (cpus),
             "request_memory         = %s" % (memory),

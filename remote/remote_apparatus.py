@@ -25,9 +25,7 @@ from events import get_events
 # pylint: enable=import-error
 
 # Set OAuth credentials as global variables
-oauth_client_id = ""
-oauth_client_secret = ""
-audience = ""
+oauth_credentials = ""
 
 
 def get_dqmio_dataset(workflow):
@@ -78,18 +76,45 @@ def get_root_file_path_for_dataset(cmsweb, dqmio_dataset, category_name):
     return hyperlinks
 
 
+def retrieve_credentials() -> tuple[str]:
+    """
+    Retrieve OAuth credentials from a JSON file, the expected fields are:
+    client_id: OAuth client id
+    client_secret: OAuth client secret
+    audience: OAuth audience
+
+    Returns:
+        (client_id, client_secret, audience)
+    """
+    logging.info("Retrieving OAuth credentials from: %s", oauth_credentials)
+    with open(oauth_credentials, "r", encoding="utf-8") as file:
+        credentials = json.load(file)
+        client_id = credentials.get("client_id")
+        client_secret = credentials.get("client_secret")
+        audience = credentials.get("audience")
+
+        logging.info("Client ID: %s", client_id)
+        secret_message = "*******" if client_secret else "Secret is not available"
+        logging.info("Client Secret: %s", secret_message)
+        logging.info("Audience: %s", audience)
+
+        return (client_id, client_secret, audience)
+
+
 def request_jwt():
     """
     Retrieve an access token to authenticate the notification requests
     """
+    client_id, client_secret, audience = retrieve_credentials()
+
     curl_request = [
         "curl --location",
         "--request POST",
         '"https://auth.cern.ch/auth/realms/cern/api-access/token"',
         '--header "Content-Type: application/x-www-form-urlencoded"',
         '--data-urlencode "grant_type=client_credentials"',
-        f'--data-urlencode "client_id={oauth_client_id}"',
-        f'--data-urlencode "client_secret={oauth_client_secret}"',
+        f'--data-urlencode "client_id={client_id}"',
+        f'--data-urlencode "client_secret={client_secret}"',
         f'--data-urlencode "audience={audience}"',
     ]
     curl_request = " ".join(curl_request)
@@ -565,7 +590,7 @@ def main():
     """
     Main function
     """
-    global oauth_client_id, oauth_client_secret, audience
+    global oauth_credentials
 
     parser = argparse.ArgumentParser(
         description="File downloader and ValidationMatrix runner"
@@ -587,19 +612,10 @@ def main():
         "--notifydone", action="store_true", help="Just notify that job is completed"
     )
     parser.add_argument(
-        "--oauth_client_id",
-        "-oci",
+        "--oauth",
+        "-oa",
         type=str,
-        help="OAuth2: Client ID for requesting a token",
-    )
-    parser.add_argument(
-        "--oauth_client_secret",
-        "-ocs",
-        type=str,
-        help="OAuth2: Client secret for requesting a token",
-    )
-    parser.add_argument(
-        "--audience", "-aud", type=str, help="OAuth2: Target application"
+        help="OAuth2: Credentials for requesting a token",
     )
 
     args = vars(parser.parse_args())
@@ -617,13 +633,10 @@ def main():
     cpus = args.get("cpus", 1)
     callback_url = args.get("callback")
     notify_done = bool(args.get("notifydone"))
-    oauth_client_id = args.get("oauth_client_id")
-    oauth_client_secret = args.get("oauth_client_secret")
-    audience = args.get("audience")
-    print_oauth_secret = "*****" if oauth_client_secret else "Secret not provided"
+    oauth_credentials = args.get("oauth")
 
     logging.info(
-        "Arguments: %s; cert %s; key %s; proxy: %s; cpus %s; callback %s; notify %s; OAuth2 Client ID: %s; OAuth2 Client Secret: %s; Audience: %s",
+        "Arguments: %s; cert %s; key %s; proxy: %s; cpus %s; callback %s; notify %s; OAuth2 Credential file: %s",
         relmon_filename,
         cert_file,
         key_file,
@@ -631,9 +644,7 @@ def main():
         cpus,
         callback_url,
         "YES" if notify_done else "NO",
-        oauth_client_id,
-        print_oauth_secret,
-        audience,
+        oauth_credentials,
     )
 
     with open(relmon_filename) as relmon_file:
