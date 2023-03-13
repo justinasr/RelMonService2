@@ -19,9 +19,11 @@ class FileCreator:
 
         self.cookie_url = config["service_url"]
         self.callback_url = config["callback_url"]
-        self.oauth_client_id = config["oauth_client_id"]
-        self.oauth_client_secret = config["oauth_client_secret"]
-        self.oauth_audience = config.get("oauth_audience", self.oauth_client_id)
+        self.oauth_client_id = config["oauth_heartbeat_client_id"]
+        self.oauth_client_secret = config["oauth_heartbeat_client_secret"]
+        self.oauth_audience = config.get(
+            "oauth_heartbeat_audience", self.oauth_client_id
+        )
 
     def create_oauth_credentials_file(self, relmon):
         """
