@@ -76,7 +76,7 @@ def get_root_file_path_for_dataset(cmsweb, dqmio_dataset, category_name):
     return hyperlinks
 
 
-def retrieve_credentials() -> tuple[str]:
+def retrieve_credentials():
     """
     Retrieve OAuth credentials from a JSON file, the expected fields are:
     client_id: OAuth client id
