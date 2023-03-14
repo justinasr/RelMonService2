@@ -240,10 +240,10 @@ def update_info():
     user_data = session.get("user")
     login = user_data.get("username", "???")
     roles = user_data.get("roles", [])
-    valid_roles = set("heartbeat")
+    valid_roles = ["heartbeat"]
 
     logger = logging.getLogger("logger")
-    authorized = bool(set(roles) & valid_roles)
+    authorized = bool(set(roles) & set(valid_roles))
     if not authorized:
         logger.warning('Not letting through user "%s" to do update', login)
         return output_text({"message": "Unauthorized"}, code=403)
