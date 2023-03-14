@@ -325,7 +325,12 @@ class Controller:
                 f"{local_relmon_directory}/oauth.json",
                 f"{remote_relmon_directory}/oauth.json",
             )
-
+            # Change permissions for OAuth file
+            self.ssh_executor.execute_command(
+                [
+                    f"chmod 600 {remote_relmon_directory}/oauth.json"
+                ]
+            )
             self.logger.info("Will try to submit %s", relmon)
             # Run condor_submit
             # Submission happens through lxplus as condor is not available on website machine

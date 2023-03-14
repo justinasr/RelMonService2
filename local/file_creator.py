@@ -40,7 +40,7 @@ class FileCreator:
             credentials_file_name,
             mode="w",
             encoding="utf-8",
-            opener=partial(os.open, mode=0o400),
+            opener=partial(os.open, mode=0o600),
         ) as output_file:
             json.dump(data, output_file, indent=2, sort_keys=True)
 
