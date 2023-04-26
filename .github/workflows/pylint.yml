@@ -9,17 +9,17 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     name: Get newest code and run pylint
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
       with:
         submodules: true
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v1
+    - name: Set up Python 3.6.8
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.6
+        python-version: "3.6.8"
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip
