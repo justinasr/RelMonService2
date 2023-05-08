@@ -5,7 +5,6 @@ Module that contains CMSWebWrapper
 import logging
 import json
 import os
-import ssl
 import time
 try:
     from http.client import HTTPSConnection
@@ -32,15 +31,11 @@ class CMSWebWrapper():
         if self.cert_file is None or self.key_file is None:
             raise Exception('Missing user certificate or user key')
 
-        # BUG: HTCondor nodes are missing the latest CA certificate
-        # See https://cern.service-now.com/service-portal?id=outage&n=OTG0076975
-        #context = ssl.create_default_context()
-        context = ssl._create_unverified_context()
-        context.load_cert_chain(self.cert_file)
         return HTTPSConnection('cmsweb.cern.ch',
                                port=443,
-                               timeout=120,
-                               context=context)
+                               cert_file=self.cert_file,
+                               key_file=self.key_file,
+                               timeout=120)
 
     def get(self, path, cache=True):
         """
