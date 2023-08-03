@@ -15,6 +15,7 @@ import os
 import time
 import sys
 import traceback
+import subprocess
 from subprocess import Popen
 from difflib import SequenceMatcher
 
@@ -73,6 +74,90 @@ def get_root_file_path_for_dataset(cmsweb, dqmio_dataset, category_name):
     return hyperlinks
 
 
+def get_client_credentials():
+    """
+    This function retrieves the client credentials given
+    via environment variables
+
+    Returns:
+        dict: Credentials required to request an access token via
+            client credential grant
+
+    Raises:
+        RuntimeError: If there are environment variables that were not provided
+    """
+    required_variables = [
+        "CALLBACK_CLIENT_ID",
+        "CALLBACK_CLIENT_SECRET",
+        "APPLICATION_CLIENT_ID",
+    ]
+    credentials = {}
+    msg = (
+        "Some required environment variables are not available "
+        "to send the callback notification. Please set them:\n"
+    )
+    for var in required_variables:
+        value = os.getenv(var)
+        if not value:
+            msg += "%s\n" % var
+            continue
+        credentials[var] = value
+
+    if len(credentials) == len(required_variables):
+        return credentials
+
+    raise RuntimeError(msg)
+
+
+def get_access_token(credentials):
+    """
+    Request an access token to Keycloak (CERN SSO) via a
+    client credential grant.
+
+    Args:
+        credentials (dict): Credentials required to perform a client credential grant
+            Client ID, Client Secret and Target application (audience)
+
+    Returns:
+        str: Authorization header including the captured access token
+
+    Raises:
+        RuntimeError: If there is an issue requesting the access token
+    """
+    cern_api_access_token = "https://auth.cern.ch/auth/realms/cern/api-access/token"
+    client_id = credentials["CALLBACK_CLIENT_ID"]
+    client_secret = credentials["CALLBACK_CLIENT_SECRET"]
+    audience = credentials["APPLICATION_CLIENT_ID"]
+    command = [
+        "curl",
+        "-s",
+        "--location",
+        "--request",
+        "POST",
+        cern_api_access_token,
+        "--header",
+        "'Content-Type: application/x-www-form-urlencoded'",
+        "--data-urlencode 'grant_type=client_credentials'",
+        "--data-urlencode 'client_id=%s'" % client_id,
+        "--data-urlencode 'client_secret=%s'" % client_secret,
+        "--data-urlencode 'audience=%s'" % audience,
+    ]
+    command = " ".join(command)
+    logging.info("Requesting access token...")
+    proc = Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    stdout = proc.communicate()[0]
+    stdout = stdout.decode("utf-8")
+    if proc.returncode != 0:
+        raise RuntimeError("Error requesting an access token: %s" % (stdout))
+
+    token_content = json.loads(stdout)
+    token = token_content.get("access_token")
+    if not token:
+        raise RuntimeError("Invalid access token request. Details:", token_content)
+    header = "Bearer %s" % token
+    return header
+
+
 def notify(relmon, callback_url):
     """
     Send a notification about progress back to RelMon service
@@ -81,11 +166,13 @@ def notify(relmon, callback_url):
     with open("notify_data.json", "w") as json_file:
         json.dump(relmon, json_file, indent=2, sort_keys=True)
 
+    credentials = get_client_credentials()
+    access_token = get_access_token(credentials)
+
     command = [
         "curl",
         "-X",
         "POST",
-        "--cookie cookie.txt",
         callback_url,
         "-s",
         "-k",
@@ -96,6 +183,8 @@ def notify(relmon, callback_url):
         "@notify_data.json",
         "-H",
         "'Content-Type: application/json'",
+        "-H",
+        "'Authorization: %s'" % access_token,
         "-o",
         "/dev/null",
     ]

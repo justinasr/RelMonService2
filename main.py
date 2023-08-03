@@ -284,11 +284,16 @@ def update_info():
     API for jobs in HTCondor to notify about progress
     """
     authorized_roles: set[str] = set(["cms-pdmv-serv"])
+    authorized_service_application: str = "service-account-cms-ppd-pdmv-api-access"
     user_roles: set[str] = set(get_roles())
     logger = logging.getLogger("logger")
     user_data: dict[str, str] = user_info_dict()
-    if bool(user_roles & authorized_roles) == False:
-        logger.warning('Not letting through user "%s" to do update', user_data["login"])
+    login: str = user_data["login"]
+    if (
+        bool(user_roles & authorized_roles) == False
+        or login != authorized_service_application
+    ):
+        logger.warning('Not letting through user "%s" to do update', login)
         return output_text({"message": "Unauthorized"}, code=403)
 
     data = json.loads(request.data.decode("utf-8"))

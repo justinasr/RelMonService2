@@ -39,6 +39,10 @@ Attributes:
     ENABLE_AUTH_MIDDLEWARE (bool): Enables the AuthenticationMiddleware to parse JWT 
         or enable the application to handle OIDC flow by itself.
     SECRET_KEY (str): Flask secret key.
+    CLIENT_ID (str): Client ID related to RelMonService2 application or the reverse proxy that provides
+        authentication.
+    CALLBACK_CLIENT_ID (str): Client ID for CLI integration application.
+    CALLBACK_CLIENT_SECRET (str): Client secret for CLI integration application.
 """
 import os
 import inspect
@@ -69,6 +73,10 @@ ENABLE_AUTH_MIDDLEWARE: bool = bool(os.getenv("ENABLE_AUTH_MIDDLEWARE"))
 
 # OAuth2 credentials
 SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+CLIENT_ID: str = os.getenv("CLIENT_ID", "")
+CALLBACK_CLIENT_ID: str = os.getenv("CALLBACK_CLIENT_ID", "")
+CALLBACK_CLIENT_SECRET: str = os.getenv("CALLBACK_CLIENT_SECRET", "")
+
 
 # Check that all environment variables are provided
 missing_environment_variables: dict[str, str] = dict(
