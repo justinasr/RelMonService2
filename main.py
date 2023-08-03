@@ -1,30 +1,91 @@
 """
 Module that contains start of the program, tick scheduler and web APIs
 """
-import argparse
 import logging
 import json
-import configparser
 import os
 import time
 import inspect
 from datetime import datetime
-from flask import Flask, render_template, request, make_response
+from flask import (
+    Flask,
+    session,
+    render_template,
+    request,
+    make_response,
+)
 from flask_restful import Api
 from jinja2.exceptions import TemplateNotFound
 from apscheduler.schedulers.background import BackgroundScheduler
+from core_lib.middlewares.auth import AuthenticationMiddleware, UserInfo
 from mongodb_database import Database
 from local.controller import Controller
 from local.relmon import RelMon
-from environment import TICK_INTERVAL, HOST, PORT, DEBUG
+from environment import (
+    TICK_INTERVAL,
+    HOST,
+    PORT,
+    DEBUG,
+    SECRET_KEY,
+    ENABLE_AUTH_MIDDLEWARE,
+)
 
 
 app = Flask(
     __name__, static_folder="./frontend/dist/static", template_folder="./frontend/dist"
 )
 api = Api(app)
+if ENABLE_AUTH_MIDDLEWARE:
+    app.secret_key = SECRET_KEY
+    auth: AuthenticationMiddleware = AuthenticationMiddleware(app=app)
+    app.before_request(
+        lambda: auth.authenticate(request=request, flask_session=session)
+    )
 scheduler = BackgroundScheduler()
 controller = Controller()
+
+
+def get_groups_from_headers() -> list[str]:
+    """
+    Retrieves the list of e-groups sent via Adfs-Group header
+    """
+    groups = [
+        x.strip().lower() for x in request.headers.get("Adfs-Group", "???").split(";")
+    ]
+    return groups
+
+
+def get_roles() -> list[str]:
+    """
+    Retrieves the list of authorized roles/groups
+    """
+    user_data: UserInfo | None = session.get("user")
+    if user_data:
+        return user_data.roles
+    return get_groups_from_headers()
+
+
+def user_info_dict():
+    """
+    Get user name, login, email and authorized flag from request headers
+    """
+    user_data: UserInfo = session.get("user")
+    if user_data:
+        return {
+            "login": user_data.username,
+            "authorized_user": is_user_authorized(),
+            "fullname": user_data.fullname,
+            "email": user_data.email,
+        }
+    fullname = request.headers.get("Adfs-Fullname", "")
+    login = request.headers.get("Adfs-Login", "")
+    email = request.headers.get("Adfs-Email", "")
+    return {
+        "login": login,
+        "authorized_user": is_user_authorized(),
+        "fullname": fullname,
+        "email": email,
+    }
 
 
 @app.route("/")
@@ -222,10 +283,12 @@ def update_info():
     """
     API for jobs in HTCondor to notify about progress
     """
-    login = request.headers.get("Adfs-Login", "???")
+    authorized_roles: set[str] = set(["cms-pdmv-serv"])
+    user_roles: set[str] = set(get_roles())
     logger = logging.getLogger("logger")
-    if login not in ("pdmvserv", "jrumsevi"):
-        logger.warning('Not letting through user "%s" to do update', login)
+    user_data: dict[str, str] = user_info_dict()
+    if bool(user_roles & authorized_roles) == False:
+        logger.warning('Not letting through user "%s" to do update', user_data["login"])
         return output_text({"message": "Unauthorized"}, code=403)
 
     data = json.loads(request.data.decode("utf-8"))
@@ -298,30 +361,13 @@ def api_documentation(_path):
     return render_template("api_documentation.html", docs=docs)
 
 
-def user_info_dict():
-    """
-    Get user name, login, email and authorized flag from request headers
-    """
-    fullname = request.headers.get("Adfs-Fullname", "")
-    login = request.headers.get("Adfs-Login", "")
-    email = request.headers.get("Adfs-Email", "")
-    authorized_user = is_user_authorized()
-    return {
-        "login": login,
-        "authorized_user": authorized_user,
-        "fullname": fullname,
-        "email": email,
-    }
-
-
-def is_user_authorized():
+def is_user_authorized() -> bool:
     """
     Return whether user is a member of administrators e-group
     """
-    groups = [
-        x.strip().lower() for x in request.headers.get("Adfs-Group", "???").split(";")
-    ]
-    return "cms-ppd-pdmv-val-admin-pdmv" in groups
+    authorized_roles: set[str] = set(["cms-ppd-pdmv-val-admin-pdmv", "cms-pdmv-serv"])
+    user_roles: set[str] = set(get_roles())
+    return bool(user_roles & authorized_roles)
 
 
 def tick():

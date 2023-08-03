@@ -36,6 +36,9 @@ Attributes:
     HOST (str): Flask listening hostname
     PORT (int): Flask port
     DEBUG (bool): Enables DEBUG mode for RelMonService2 application
+    ENABLE_AUTH_MIDDLEWARE (bool): Enables the AuthenticationMiddleware to parse JWT 
+        or enable the application to handle OIDC flow by itself.
+    SECRET_KEY (str): Flask secret key.
 """
 import os
 import inspect
@@ -62,6 +65,10 @@ MONGO_DB_PASSWORD: str = os.getenv("MONGO_DB_PASSWORD", "")
 HOST: str = os.getenv("HOST", "0.0.0.0")
 PORT: int = int(os.getenv("PORT", "8000"))
 DEBUG: bool = bool(os.getenv("DEBUG"))
+ENABLE_AUTH_MIDDLEWARE: bool = bool(os.getenv("ENABLE_AUTH_MIDDLEWARE"))
+
+# OAuth2 credentials
+SECRET_KEY: str = os.getenv("SECRET_KEY", "")
 
 # Check that all environment variables are provided
 missing_environment_variables: dict[str, str] = dict(

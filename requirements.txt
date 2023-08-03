@@ -7,3 +7,6 @@ paramiko==3.3.1
 pymongo==3.10.1
 pylint==2.9.5
 mypy==1.4.1
+PyJWT>=2.6.0
+Authlib>=1.2.0
+requests>=2.31.0
