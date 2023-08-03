@@ -16,6 +16,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from mongodb_database import Database
 from local.controller import Controller
 from local.relmon import RelMon
+from environment import TICK_INTERVAL, HOST, PORT, DEBUG
 
 
 app = Flask(
@@ -339,67 +340,23 @@ def setup_console_logging():
     )
 
 
-def get_config(mode):
-    """
-    Get config as a dictionary
-    Based on the mode - prod or dev
-    """
-    config = configparser.ConfigParser()
-    config.read("config.cfg")
-    config = dict(config.items(mode))
-    logging.info("Config values:")
-    for key, value in config.items():
-        if key in ("ssh_credentials", "database_auth"):
-            logging.info("  %s: ******", key)
-        else:
-            logging.info("  %s: %s", key, value)
-
-    return config
-
-
 def main():
     """
     Main function, parse arguments, create a controller and start Flask web server
     """
-    parser = argparse.ArgumentParser(description="RelMon Service")
-    parser.add_argument(
-        "--mode",
-        choices=["prod", "dev"],
-        required=True,
-        help="Production (prod) or development (dev) mode",
-    )
-    parser.add_argument("--debug", help="Debug mode", action="store_true")
-    parser.add_argument("--port", help="Port, default is 8001", default=8001)
-    parser.add_argument("--host", help="Host IP, default is 0.0.0.0", default="0.0.0.0")
-    args = vars(parser.parse_args())
-    debug = args.get("debug", False)
+    debug = DEBUG
+    host = HOST
+    port = PORT
+
     setup_console_logging()
     logger = logging.getLogger("logger")
-    mode = args.get("mode", "dev").lower()
-    logger.info('Mode is "%s"', mode)
-    config = get_config(mode)
     scheduler.add_executor("processpool")
     if not debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        controller.set_config(config)
-        scheduler.add_job(
-            tick, "interval", seconds=int(config.get("tick_interval")), max_instances=1
-        )
-
-    database_auth = config.get("database_auth")
-    if database_auth:
-        Database.set_credentials_file(database_auth)
+        controller.set_config()
+        scheduler.add_job(tick, "interval", seconds=TICK_INTERVAL, max_instances=1)
 
     scheduler.start()
-    port = args.get("port")
-    host = args.get("host")
     logger.info("Will run on %s:%s", host, port)
-    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-        # Do only once, before the reloader
-        pid = os.getpid()
-        logger.info("PID: %s", pid)
-        with open("relmonservice.pid", "w") as pid_file:
-            pid_file.write(str(pid))
-
     app.run(host=host, port=port, debug=debug, threaded=True)
     scheduler.shutdown()
 

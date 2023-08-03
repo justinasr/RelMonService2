@@ -15,6 +15,7 @@ from local.ssh_executor import SSHExecutor
 from local.relmon import RelMon
 from local.file_creator import FileCreator
 from local.email_sender import EmailSender
+from environment import SERVICE_URL, REPORTS_URL, REMOTE_DIRECTORY
 
 
 class Controller:
@@ -41,20 +42,19 @@ class Controller:
         self.service_url = "localhost"
         self.reports_url = "localhost"
 
-    def set_config(self, config):
+    def set_config(self):
         """
         Take in a config and update all local variables
         """
-        self.config = config
-        self.remote_directory = config["remote_directory"]
+        self.remote_directory = REMOTE_DIRECTORY
         if self.remote_directory[-1] == "/":
             self.remote_directory = self.remote_directory[:-1]
 
-        self.ssh_executor = SSHExecutor(config)
-        self.file_creator = FileCreator(config)
-        self.email_sender = EmailSender(config)
-        self.service_url = self.config["service_url"]
-        self.reports_url = self.config["reports_url"]
+        self.ssh_executor = SSHExecutor()
+        self.file_creator = FileCreator()
+        self.email_sender = EmailSender()
+        self.service_url = SERVICE_URL
+        self.reports_url = REPORTS_URL
 
     def tick(self):
         """

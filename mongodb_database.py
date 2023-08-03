@@ -7,6 +7,7 @@ import json
 import os
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
+from environment import MONGO_DB_PORT, MONGO_DB_HOST, MONGO_DB_PASSWORD, MONGO_DB_USER
 
 
 class Database:
@@ -16,12 +17,12 @@ class Database:
     """
 
     PAGE_SIZE = 10
-    DATABASE_HOST = "localhost"
-    DATABASE_PORT = 27017
+    DATABASE_HOST = MONGO_DB_HOST
+    DATABASE_PORT = MONGO_DB_PORT
     DATABASE_NAME = "relmons"
     COLLECTION_NAME = "relmons"
-    USERNAME = None
-    PASSWORD = None
+    USERNAME = MONGO_DB_USER
+    PASSWORD = MONGO_DB_PASSWORD
 
     def __init__(self):
         self.logger = logging.getLogger("logger")

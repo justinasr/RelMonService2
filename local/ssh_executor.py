@@ -1,10 +1,14 @@
 """
 Module that handles all SSH operations - both ssh and ftp
 """
-import json
 import logging
 import time
 import paramiko
+from environment import (
+    SERVICE_ACCOUNT_PASSWORD,
+    SERVICE_ACCOUNT_USERNAME,
+    SUBMISSION_HOST,
+)
 
 
 class SSHExecutor:
@@ -12,12 +16,15 @@ class SSHExecutor:
     SSH executor allows to perform remote commands and upload/download files
     """
 
-    def __init__(self, config):
+    def __init__(self):
         self.ssh_client = None
         self.ftp_client = None
         self.logger = logging.getLogger("logger")
-        self.remote_host = config["submission_host"]
-        self.credentials = config["ssh_credentials"]
+        self.remote_host = SUBMISSION_HOST
+        self.credentials = {
+            "username": SERVICE_ACCOUNT_USERNAME,
+            "password": SERVICE_ACCOUNT_PASSWORD,
+        }
 
     def setup_ssh(self):
         """
@@ -27,21 +34,15 @@ class SSHExecutor:
         if self.ssh_client:
             self.close_connections()
 
-        if ":" not in self.credentials:
-            with open(self.credentials) as json_file:
-                credentials = json.load(json_file)
-        else:
-            credentials = {}
-            credentials["username"] = self.credentials.split(":")[0]
-            credentials["password"] = self.credentials.split(":")[1]
-
-        self.logger.info("Credentials loaded successfully: %s", credentials["username"])
+        self.logger.info(
+            "Credentials loaded successfully: %s", self.credentials["username"]
+        )
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh_client.connect(
             self.remote_host,
-            username=credentials["username"],
-            password=credentials["password"],
+            username=self.credentials["username"],
+            password=self.credentials["password"],
             timeout=30,
         )
         self.logger.info("Done setting up ssh")

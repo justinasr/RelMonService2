@@ -2,6 +2,7 @@
 Module for FileCreator
 """
 import json
+from environment import REMOTE_DIRECTORY, WEB_LOCATION_PATH, SERVICE_URL, CALLBACK_URL
 
 
 class FileCreator:
@@ -9,14 +10,14 @@ class FileCreator:
     File creator creates bash executable for condor and condor submission job file
     """
 
-    def __init__(self, config):
-        self.remote_location = config["remote_directory"]
-        self.web_location = config["web_location"]
+    def __init__(self):
+        self.remote_location = REMOTE_DIRECTORY
+        self.web_location = WEB_LOCATION_PATH
         if self.web_location[-1] == "/":
             self.web_location = self.web_location[:-1]
 
-        self.cookie_url = config["service_url"]
-        self.callback_url = config["callback_url"]
+        self.cookie_url = SERVICE_URL
+        self.callback_url = CALLBACK_URL
 
     def create_job_script_file(self, relmon):
         """
