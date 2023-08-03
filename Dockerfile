@@ -32,6 +32,8 @@ RUN rm -rf frontend/*
 COPY --chown=pdmv:pdmv --from=frontend /usr/app/dist ./frontend/dist
 COPY --chown=pdmv:pdmv --from=build /usr/app/venv ./venv
 
+RUN chmod -R 707 /usr/app/relmons/
+
 USER 1001
 
 ENV PATH="/usr/app/venv/bin:$PATH"
