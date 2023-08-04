@@ -2,7 +2,15 @@
 Module for FileCreator
 """
 import json
-from environment import REMOTE_DIRECTORY, WEB_LOCATION_PATH, SERVICE_URL, CALLBACK_URL
+from environment import (
+    REMOTE_DIRECTORY,
+    WEB_LOCATION_PATH,
+    SERVICE_URL,
+    CALLBACK_URL,
+    CALLBACK_CLIENT_ID,
+    CALLBACK_CLIENT_SECRET,
+    CLIENT_ID,
+)
 
 
 class FileCreator:
@@ -137,8 +145,16 @@ class FileCreator:
         memory = relmon.get_memory()
         disk = relmon.get_disk()
         condor_file_name = "relmons/%s/RELMON_%s.sub" % (relmon_id, relmon_id)
+        credentials_env = (
+            f"CALLBACK_CLIENT_ID={CALLBACK_CLIENT_ID};"
+            f"CALLBACK_CLIENT_SECRET={CALLBACK_CLIENT_SECRET};"
+            f"APPLICATION_CLIENT_ID={CLIENT_ID}"
+        )
+        credentials_env_arg = f'"{credentials_env}"'
+        # RX
         condor_file_content = [
             "executable             = RELMON_%s.sh" % (relmon_id),
+            "environment            = %s" % (credentials_env_arg),
             "output                 = RELMON_%s.out" % (relmon_id),
             "error                  = RELMON_%s.err" % (relmon_id),
             "log                    = RELMON_%s.log" % (relmon_id),

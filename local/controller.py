@@ -19,9 +19,6 @@ from environment import (
     SERVICE_URL,
     REPORTS_URL,
     REMOTE_DIRECTORY,
-    CALLBACK_CLIENT_ID,
-    CALLBACK_CLIENT_SECRET,
-    CLIENT_ID,
 )
 
 
@@ -330,18 +327,12 @@ class Controller:
             # Run condor_submit
             # Submission happens through lxplus as condor is not available on website machine
             # It is easier to ssh to lxplus than set up condor locally
-            credentials_env = (
-                f"CALLBACK_CLIENT_ID={CALLBACK_CLIENT_ID};"
-                f"CALLBACK_CLIENT_SECRET={CALLBACK_CLIENT_SECRET};"
-                f"APPLICATION_CLIENT_ID={CLIENT_ID}"
-            )
-            credentials_env_arg = f"'{credentials_env}'"
             stdout, stderr = self.ssh_executor.execute_command(
                 [
                     "cd %s" % (remote_relmon_directory),
                     "voms-proxy-init -voms cms --valid 24:00 --out $(pwd)/proxy.txt",
-                    "module load lxbatch/tzero && condor_submit %s RELMON_%s.sub"
-                    % (credentials_env_arg, relmon_id),
+                    "module load lxbatch/tzero && condor_submit RELMON_%s.sub"
+                    % (relmon_id),
                 ]
             )
             # Parse result of condor_submit
