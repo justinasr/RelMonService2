@@ -291,7 +291,7 @@ def update_info():
     login: str = user_data["login"]
     if (
         bool(user_roles & authorized_roles) == False
-        or login != authorized_service_application
+        and login != authorized_service_application
     ):
         logger.warning('Not letting through user "%s" to do update', login)
         return output_text({"message": "Unauthorized"}, code=403)
