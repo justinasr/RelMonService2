@@ -104,8 +104,10 @@ def get_client_credentials():
         credentials[var] = value
 
     if len(credentials) == len(required_variables):
+        logging.info("Returning OAuth2 credentials for requesting a token")
         return credentials
 
+    logging.error(msg)
     raise RuntimeError(msg)
 
 
@@ -148,13 +150,20 @@ def get_access_token(credentials):
     stdout = proc.communicate()[0]
     stdout = stdout.decode("utf-8")
     if proc.returncode != 0:
-        raise RuntimeError("Error requesting an access token: %s" % (stdout))
+        request_error = "Error requesting an access token: %s" % stdout
+        logging.error(request_error)
+        raise RuntimeError(request_error)
 
+    logging.info("Access token output: %s" % stdout)
     token_content = json.loads(stdout)
     token = token_content.get("access_token")
     if not token:
-        raise RuntimeError("Invalid access token request. Details:", token_content)
+        token_error = "Invalid access token request. Details: %s" % token_content
+        logging.error(token_error)
+        raise RuntimeError(token_error)
+
     header = "Bearer %s" % token
+    logging.info("Authorization header: %s" % header)
     return header
 
 
@@ -185,13 +194,14 @@ def notify(relmon, callback_url):
         "'Content-Type: application/json'",
         "-H",
         "'Authorization: %s'" % access_token,
-        "-o",
-        "/dev/null",
     ]
     command = " ".join(command)
     logging.info("Notifying...")
-    proc = Popen(command, shell=True)
-    proc.wait()
+    logging.info("Notification command: %s" % command)
+    proc = Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
+    stdout = proc.communicate()[0]
+    stdout = stdout.decode("utf-8")
+    logging.info("Notification result: %s" % stdout)
 
     os.remove("notify_data.json")
     time.sleep(0.05)
