@@ -154,7 +154,6 @@ def get_access_token(credentials):
         logging.error(request_error)
         raise RuntimeError(request_error)
 
-    logging.info("Access token output: %s" % stdout)
     token_content = json.loads(stdout)
     token = token_content.get("access_token")
     if not token:
@@ -163,7 +162,6 @@ def get_access_token(credentials):
         raise RuntimeError(token_error)
 
     header = "Bearer %s" % token
-    logging.info("Authorization header: %s" % header)
     return header
 
 
@@ -197,7 +195,6 @@ def notify(relmon, callback_url):
     ]
     command = " ".join(command)
     logging.info("Notifying...")
-    logging.info("Notification command: %s" % command)
     proc = Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True)
     stdout = proc.communicate()[0]
     stdout = stdout.decode("utf-8")
