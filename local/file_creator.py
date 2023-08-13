@@ -148,7 +148,7 @@ class FileCreator:
         credentials_env_arg = f'"{credentials_env}"'
         condor_file_content = [
             "executable             = RELMON_%s.sh" % (relmon_id),
-            'environment            = "%s"' % (credentials_env_arg),
+            "environment            = %s" % (credentials_env_arg),
             "output                 = RELMON_%s.out" % (relmon_id),
             "error                  = RELMON_%s.err" % (relmon_id),
             "log                    = RELMON_%s.log" % (relmon_id),
