@@ -47,15 +47,11 @@ class FileCreator:
             "export HOME=$(pwd)",
             # Clone the relmon service
             "git clone https://github.com/cms-PdmV/relmonservice2.git",
-            # Fallback for github hiccups
-            "if [ ! -d relmonservice2 ]; then",
-            "  wget https://github.com/cms-PdmV/RelmonService2/archive/master.zip",
-            "  unzip master.zip",
-            "  mv RelmonService2-master relmonservice2",
-            "fi",
-            # Make a cookie for callbacks about progress
-            "cern-get-sso-cookie -u %s -o cookie.txt" % (self.cookie_url),
-            "cp cookie.txt relmonservice2/remote",
+            # FIXME: After merging this with master, include the old content
+            # available into this file. This is, the fallback mechanism to download
+            # the source code as .zip file
+            "git fetch && git checkout SSOMigrationV2",
+            "git pull origin SSOMigrationV2",
             # CMSSW environment setup
             "source /cvmfs/cms.cern.ch/cmsset_default.sh",
             "scramv1 project CMSSW CMSSW_11_0_4",
@@ -113,7 +109,6 @@ class FileCreator:
             'echo "Integrity check:"',
             'echo "PRAGMA integrity_check;" | sqlite3 %s' % (web_sqlite_path),
             "cd $DIR",
-            "cern-get-sso-cookie -u %s -o cookie.txt" % (self.cookie_url),
             "cp cookie.txt relmonservice2/remote",
             "python3 relmonservice2/remote/remote_apparatus.py "  # No newlines here
             "-r RELMON_%s.json --callback %s --notifydone"
@@ -146,15 +141,14 @@ class FileCreator:
         disk = relmon.get_disk()
         condor_file_name = "relmons/%s/RELMON_%s.sub" % (relmon_id, relmon_id)
         credentials_env = (
-            f"CALLBACK_CLIENT_ID={CALLBACK_CLIENT_ID};"
-            f"CALLBACK_CLIENT_SECRET={CALLBACK_CLIENT_SECRET};"
+            f"CALLBACK_CLIENT_ID={CALLBACK_CLIENT_ID} "
+            f"CALLBACK_CLIENT_SECRET={CALLBACK_CLIENT_SECRET} "
             f"APPLICATION_CLIENT_ID={CLIENT_ID}"
         )
         credentials_env_arg = f'"{credentials_env}"'
-        # RX
         condor_file_content = [
             "executable             = RELMON_%s.sh" % (relmon_id),
-            "environment            = %s" % (credentials_env_arg),
+            'environment            = "%s"' % (credentials_env_arg),
             "output                 = RELMON_%s.out" % (relmon_id),
             "error                  = RELMON_%s.err" % (relmon_id),
             "log                    = RELMON_%s.log" % (relmon_id),
