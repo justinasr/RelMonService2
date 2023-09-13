@@ -29,4 +29,4 @@ jobs:
       # --reports=y - print a report at the end
       run: |
         python3 -m pylint --version
-        python3 -m pylint --fail-under=9.25 --fail-on=E --reports=y `find . -type f | grep .py$ | xargs`
+        python3 -m pylint --fail-under=9.25 --fail-on=E --reports=y `find . -type d \( -path ./venv -o -path ./core_lib \) -prune -o -type f | grep .py$ | xargs`
