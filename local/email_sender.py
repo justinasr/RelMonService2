@@ -3,42 +3,39 @@ Module that handles all email notifications
 """
 import smtplib
 import logging
-import json
 from email import encoders
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
+from environment import (
+    SERVICE_ACCOUNT_USERNAME,
+    SERVICE_ACCOUNT_PASSWORD,
+    EMAIL_AUTH_REQUIRED,
+)
 
 
-class EmailSender():
+class EmailSender:
     """
     Email Sender allows to send emails to users using CERN SMTP server
     """
 
-    def __init__(self, config):
-        self.logger = logging.getLogger('logger')
-        self.credentials = config['ssh_credentials']
+    def __init__(self):
+        self.logger = logging.getLogger("logger")
         self.smtp = None
 
     def __setup_smtp(self):
         """
-        Read credentials and connect to SMTP file
+        Setup SMTP client session
         """
-        if ':' not in self.credentials:
-            with open(self.credentials) as json_file:
-                credentials = json.load(json_file)
-        else:
-            credentials = {}
-            credentials['username'] = self.credentials.split(':')[0]
-            credentials['password'] = self.credentials.split(':')[1]
-
-        self.logger.info('Credentials loaded successfully: %s', credentials['username'])
-        self.smtp = smtplib.SMTP(host='cernmx.cern.ch', port=25)
-        # self.smtp.connect()
+        self.logger.info(
+            "Credentials loaded successfully: %s", SERVICE_ACCOUNT_USERNAME
+        )
+        self.smtp = smtplib.SMTP(host="cernmx.cern.ch", port=25)
         self.smtp.ehlo()
         self.smtp.starttls()
         self.smtp.ehlo()
-        # self.smtp.login(credentials['username'], credentials['password'])
+        if EMAIL_AUTH_REQUIRED:
+            self.smtp.login(SERVICE_ACCOUNT_USERNAME, SERVICE_ACCOUNT_PASSWORD)
 
     def __close_smtp(self):
         """
@@ -52,32 +49,33 @@ class EmailSender():
         Send email
         """
         body = body.strip()
-        body += '\n\nSincerely,\nRelMon Service'
-        ccs = ['PdmV Service Account <pdmvserv@cern.ch>']
+        body += "\n\nSincerely,\nRelMon Service"
+        ccs = ["PdmV Service Account <pdmvserv@cern.ch>"]
         # Create a fancy email message
         message = MIMEMultipart()
-        message['Subject'] = '[RelMon] %s' % (subject)
-        message['From'] = 'PdmV Service Account <pdmvserv@cern.ch>'
-        message['To'] = ', '.join(recipients)
-        message['Cc'] = ', '.join(ccs)
+        message["Subject"] = "[RelMon] %s" % (subject)
+        message["From"] = "PdmV Service Account <pdmvserv@cern.ch>"
+        message["To"] = ", ".join(recipients)
+        message["Cc"] = ", ".join(ccs)
         # Set body text
         message.attach(MIMEText(body))
         if files:
             for path in files:
-                attachment = MIMEBase('application', 'octet-stream')
-                with open(path, 'rb') as attachment_file:
+                attachment = MIMEBase("application", "octet-stream")
+                with open(path, "rb") as attachment_file:
                     attachment.set_payload(attachment_file.read())
 
-                file_name = path.split('/')[-1]
+                file_name = path.split("/")[-1]
                 encoders.encode_base64(attachment)
-                attachment.add_header('Content-Disposition',
-                                      'attachment; filename="%s"' % (file_name))
+                attachment.add_header(
+                    "Content-Disposition", 'attachment; filename="%s"' % (file_name)
+                )
                 message.attach(attachment)
 
-        self.logger.info('Will send "%s" to %s', message['Subject'], message['To'])
+        self.logger.info('Will send "%s" to %s', message["Subject"], message["To"])
         self.__setup_smtp()
         try:
-            self.smtp.sendmail(message['From'], recipients + ccs, message.as_string())
+            self.smtp.sendmail(message["From"], recipients + ccs, message.as_string())
         except Exception as ex:
             self.logger.error(ex)
         finally:
