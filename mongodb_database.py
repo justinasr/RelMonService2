@@ -57,7 +57,7 @@ class Database:
         """
         Load credentials from a JSON file
         """
-        with open(filename) as json_file:
+        with open(filename, encoding="utf-8") as json_file:
             credentials = json.load(json_file)
 
         cls.set_credentials(credentials["username"], credentials["password"])

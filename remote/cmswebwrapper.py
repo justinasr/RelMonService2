@@ -30,7 +30,7 @@ class CMSWebWrapper:
         Return a HTTPSConnection to cmsweb.cern.ch
         """
         if self.cert_file is None or self.key_file is None:
-            raise Exception("Missing user certificate or user key")
+            raise RuntimeError("Missing user certificate or user key")
 
         return HTTPSConnection(
             "cmsweb.cern.ch",

@@ -290,7 +290,7 @@ def update_info():
     user_data: dict[str, str] = user_info_dict()
     login: str = user_data["login"]
     if (
-        bool(user_roles & authorized_roles) == False
+        bool(user_roles & authorized_roles) is False
         and login != authorized_service_application
     ):
         logger.warning('Not letting through user "%s" to do update', login)

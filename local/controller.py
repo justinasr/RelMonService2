@@ -183,7 +183,7 @@ class Controller:
         """
         Rename relmon reports file
         """
-        ssh_executor = SSHExecutor(self.config)
+        ssh_executor = SSHExecutor()
         ssh_executor.execute_command(
             [
                 "cd %s" % (self.file_creator.web_location),

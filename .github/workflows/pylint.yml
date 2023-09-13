@@ -12,7 +12,7 @@ jobs:
     name: Get newest code and run pylint
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Set up Python
@@ -24,9 +24,9 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install -r requirements.txt
     - name: Run pylint
-      # --fail-under=9.25 - fail if score is below 9.25
+      # --fail-under=9.75 - fail if score is below 9.75
       # --fail-on=E - fail if there were errors, regardless of the score
       # --reports=y - print a report at the end
       run: |
         python3 -m pylint --version
-        python3 -m pylint --fail-under=9.25 --fail-on=E --reports=y `find . -type d \( -path ./venv -o -path ./core_lib \) -prune -o -type f | grep .py$ | xargs`
+        python3 -m pylint --fail-under=9.75 --fail-on=E --reports=y `find . -type d \( -path ./venv -o -path ./core_lib \) -prune -o -type f | grep .py$ | xargs`
