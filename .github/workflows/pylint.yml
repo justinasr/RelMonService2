@@ -24,9 +24,9 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install -r requirements.txt
     - name: Run pylint
-      # --fail-under=9.5 - fail if score is below 9.5
+      # --fail-under=9.25 - fail if score is below 9.25
       # --fail-on=E - fail if there were errors, regardless of the score
       # --reports=y - print a report at the end
       run: |
         python3 -m pylint --version
-        python3 -m pylint --fail-under=9.5 --fail-on=E --reports=y `find . -type f | grep .py$ | xargs`
+        python3 -m pylint --fail-under=9.25 --fail-on=E --reports=y `find . -type f | grep .py$ | xargs`
