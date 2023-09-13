@@ -46,10 +46,13 @@ class FileCreator:
             "DIR=$(pwd)",
             "export HOME=$(pwd)",
             # Clone the relmon service
-            "git clone -b SSOMigrationV2 https://github.com/cms-PdmV/relmonservice2.git",
-            # FIXME: After merging this with master, include the old content
-            # available into this file. This is, the fallback mechanism to download
-            # the source code as .zip file
+            "git clone https://github.com/cms-PdmV/relmonservice2.git",
+            # Fallback for github hiccups
+            "if [ ! -d relmonservice2 ]; then",
+            "  wget https://github.com/cms-PdmV/RelmonService2/archive/master.zip",
+            "  unzip master.zip",
+            "  mv RelmonService2-master relmonservice2",
+            "fi",
             # CMSSW environment setup
             "source /cvmfs/cms.cern.ch/cmsset_default.sh",
             "scramv1 project CMSSW CMSSW_11_0_4",
