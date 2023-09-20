@@ -64,7 +64,7 @@ class FileCreator:
             # Create reports directory
             "mkdir -p Reports",
             # Run the remote apparatus
-            "python relmonservice2/remote/remote_apparatus.py "  # No newline
+            "python3 relmonservice2/remote/remote_apparatus.py "  # No newline
             "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s"
             % (relmon_id, cpus, self.callback_url),
             # Close scope for CMSSW
