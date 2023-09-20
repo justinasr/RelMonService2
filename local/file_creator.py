@@ -64,7 +64,7 @@ class FileCreator:
             # Create reports directory
             "mkdir -p Reports",
             # Run the remote apparatus
-            "python3 relmonservice2/remote/remote_apparatus.py "  # No newline
+            "python relmonservice2/remote/remote_apparatus.py "  # No newline
             "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s"
             % (relmon_id, cpus, self.callback_url),
             # Close scope for CMSSW
@@ -117,7 +117,7 @@ class FileCreator:
         ]
 
         script_file_content_string = "\n".join(script_file_content)
-        with open(script_file_name, "w", encoding="utf-8") as output_file:
+        with open(script_file_name, "w") as output_file:
             output_file.write(script_file_content_string)
 
     @classmethod
@@ -128,7 +128,7 @@ class FileCreator:
         relmon_id = relmon.get_id()
         relmon_data = relmon.get_json()
         relmon_file_name = "relmons/%s/RELMON_%s.json" % (relmon_id, relmon_id)
-        with open(relmon_file_name, "w", encoding="utf-8") as output_file:
+        with open(relmon_file_name, "w") as output_file:
             json.dump(relmon_data, output_file, indent=2, sort_keys=True)
 
     @classmethod
@@ -169,5 +169,5 @@ class FileCreator:
         ]
 
         condor_file_content_string = "\n".join(condor_file_content)
-        with open(condor_file_name, "w", encoding="utf-8") as output_file:
+        with open(condor_file_name, "w") as output_file:
             output_file.write(condor_file_content_string)

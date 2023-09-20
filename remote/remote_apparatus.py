@@ -170,7 +170,7 @@ def notify(relmon, callback_url):
     Send a notification about progress back to RelMon service
     """
 
-    with open("notify_data.json", "w", encoding="utf-8") as json_file:
+    with open("notify_data.json", "w") as json_file:
         json.dump(relmon, json_file, indent=2, sort_keys=True)
 
     credentials = get_client_credentials()
@@ -568,7 +568,7 @@ def run_validation_matrix(relmon, cpus, callback_url):
     """
     Iterate through categories and start comparison process
     """
-    with open("validation_matrix.log", "w", encoding="utf-8") as log_file:
+    with open("validation_matrix.log", "w") as log_file:
         for category in relmon.get("categories", []):
             if category["status"] != "initial":
                 continue
@@ -663,7 +663,7 @@ def main():
         "YES" if notify_done else "NO",
     )
 
-    with open(relmon_filename, encoding="utf-8") as relmon_file:
+    with open(relmon_filename) as relmon_file:
         relmon = json.load(relmon_file)
 
     try:
@@ -688,7 +688,7 @@ def main():
         logging.error(traceback.format_exc())
         relmon["status"] = "failed"
     finally:
-        with open(relmon_filename, "w", encoding="utf-8") as relmon_file:
+        with open(relmon_filename, "w") as relmon_file:
             json.dump(relmon, relmon_file, indent=2, sort_keys=True)
 
     notify(relmon, callback_url)
