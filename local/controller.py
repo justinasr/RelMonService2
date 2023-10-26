@@ -331,7 +331,7 @@ class Controller:
                 [
                     "cd %s" % (remote_relmon_directory),
                     "voms-proxy-init -voms cms --valid 24:00 --out $(pwd)/proxy.txt",
-                    "module load lxbatch/tzero && condor_submit RELMON_%s.sub"
+                    "condor_submit RELMON_%s.sub"
                     % (relmon_id),
                 ]
             )
@@ -370,7 +370,7 @@ class Controller:
             "Will check if %s is running in HTCondor, id: %s", relmon, relmon_condor_id
         )
         stdout, stderr = self.ssh_executor.execute_command(
-            "module load lxbatch/tzero && condor_q -af:h ClusterId JobStatus | "
+            "condor_q -af:h ClusterId JobStatus | "
             "grep %s" % (relmon_condor_id)
         )
         new_condor_status = "<unknown>"
@@ -506,7 +506,7 @@ class Controller:
         condor_id = relmon.get_condor_id()
         if condor_id > 0:
             self.ssh_executor.execute_command(
-                "module load lxbatch/tzero && condor_rm %s" % (condor_id)
+                "condor_rm %s" % (condor_id)
             )
         else:
             self.logger.info(
