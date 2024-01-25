@@ -45,7 +45,6 @@ class FileCreator:
             "#!/bin/bash",
             "DIR=$(pwd)",
             "export HOME=$(pwd)",
-            'echo "Python version: $(python3 -V)"',
             # Clone the relmon service
             "git clone https://github.com/cms-PdmV/relmonservice2.git",
             # Fallback for github hiccups
@@ -56,8 +55,8 @@ class FileCreator:
             "fi",
             # CMSSW environment setup
             "source /cvmfs/cms.cern.ch/cmsset_default.sh",
-            "scramv1 project CMSSW CMSSW_13_2_6",
-            "cd CMSSW_13_2_6/src",
+            "scramv1 project CMSSW CMSSW_11_0_4",
+            "cd CMSSW_11_0_4/src",
             # Open scope for CMSSW
             "(",
             "eval `scramv1 runtime -sh`",
@@ -65,7 +64,7 @@ class FileCreator:
             # Create reports directory
             "mkdir -p Reports",
             # Run the remote apparatus
-            "python3 relmonservice2/remote/remote_apparatus.py "  # No newline
+            "python relmonservice2/remote/remote_apparatus.py "  # No newline
             "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s"
             % (relmon_id, cpus, self.callback_url),
             # Close scope for CMSSW
@@ -161,11 +160,11 @@ class FileCreator:
             "request_disk           = %s" % (disk),
             '+JobFlavour            = "tomorrow"',
             "+JobPrio               = 100",
-            'requirements           = (OpSysAndVer =?= "AlmaLinux9")',
+            'requirements           = (OpSysAndVer =?= "CentOS7")',
             # Leave in queue when status is DONE for two hours - 7200 seconds
             "leave_in_queue         = JobStatus == 4 && (CompletionDate =?= UNDEFINED"
             "                         || ((CurrentTime - CompletionDate) < 7200))",
-            '+AccountingGroup       = "group_u_CMS.u_zh.priority"',
+            '+AccountingGroup       = "group_u_CMS.CAF.PHYS"',
             "queue",
         ]
 
