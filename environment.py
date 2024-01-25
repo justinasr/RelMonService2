@@ -43,6 +43,7 @@ Attributes:
         or the reverse proxy that provides authentication.
     CALLBACK_CLIENT_ID (str): Client ID for CLI integration application.
     CALLBACK_CLIENT_SECRET (str): Client secret for CLI integration application.
+    CMSSW_RELEASE (str): cms-sw version to use for generating the monitoring report.
 """
 import os
 import inspect
@@ -58,6 +59,7 @@ SERVICE_ACCOUNT_PASSWORD: str = os.getenv("SERVICE_ACCOUNT_PASSWORD", "")
 EMAIL_AUTH_REQUIRED: bool = bool(os.getenv("EMAIL_AUTH_REQUIRED"))
 WEB_LOCATION_PATH: str = os.getenv("WEB_LOCATION_PATH", "")
 TICK_INTERVAL: int = int(os.getenv("TICK_INTERVAL", "600"))
+CMSSW_RELEASE: str = os.getenv("CMSSW_RELEASE", "CMSSW_11_0_4")
 
 # MongoDB database
 MONGO_DB_HOST: str = os.getenv("MONGO_DB_HOST", "")

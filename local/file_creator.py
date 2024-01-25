@@ -10,6 +10,7 @@ from environment import (
     CALLBACK_CLIENT_ID,
     CALLBACK_CLIENT_SECRET,
     CLIENT_ID,
+    CMSSW_RELEASE
 )
 
 
@@ -45,6 +46,9 @@ class FileCreator:
             "#!/bin/bash",
             "DIR=$(pwd)",
             "export HOME=$(pwd)",
+            "export RELMON_CMSSW_RELEASE='%s'" % (CMSSW_RELEASE),
+            'echo "Python version: $(python3 -V)"',
+            'echo "CMSSW release to use: $RELMON_CMSSW_RELEASE"',
             # Clone the relmon service
             "git clone https://github.com/cms-PdmV/relmonservice2.git",
             # Fallback for github hiccups
@@ -55,8 +59,8 @@ class FileCreator:
             "fi",
             # CMSSW environment setup
             "source /cvmfs/cms.cern.ch/cmsset_default.sh",
-            "scramv1 project CMSSW CMSSW_11_0_4",
-            "cd CMSSW_11_0_4/src",
+            "scramv1 project CMSSW $RELMON_CMSSW_RELEASE",
+            "cd $RELMON_CMSSW_RELEASE/src",
             # Open scope for CMSSW
             "(",
             "eval `scramv1 runtime -sh`",
@@ -64,7 +68,7 @@ class FileCreator:
             # Create reports directory
             "mkdir -p Reports",
             # Run the remote apparatus
-            "python relmonservice2/remote/remote_apparatus.py "  # No newline
+            "python3 relmonservice2/remote/remote_apparatus.py "  # No newline
             "-r RELMON_%s.json -p proxy.txt --cpus %s --callback %s"
             % (relmon_id, cpus, self.callback_url),
             # Close scope for CMSSW
@@ -160,7 +164,7 @@ class FileCreator:
             "request_disk           = %s" % (disk),
             '+JobFlavour            = "tomorrow"',
             "+JobPrio               = 100",
-            'requirements           = (OpSysAndVer =?= "CentOS7")',
+            'requirements           = (OpSysAndVer =?= "AlmaLinux9")',
             # Leave in queue when status is DONE for two hours - 7200 seconds
             "leave_in_queue         = JobStatus == 4 && (CompletionDate =?= UNDEFINED"
             "                         || ((CurrentTime - CompletionDate) < 7200))",
