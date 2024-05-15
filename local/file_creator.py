@@ -65,6 +65,11 @@ class FileCreator:
             "(",
             "eval `scramv1 runtime -sh`",
             # Embed the proposed change to test it
+            # Configure git so that `git cms-addpkg` doesn't fail.
+            "git config --global user.name 'PdmV Service'",
+            "git config --global user.email 'pdmv.service@cern.ch'",
+            "git config --global user.github pdmvserv",
+            # Include the module to recompile
             "git cms-addpkg Utilities/RelMon",
             "curl -O https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/44977.diff && git apply 44977.diff",
             "scram b -j 4",
