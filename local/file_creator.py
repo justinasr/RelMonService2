@@ -64,6 +64,21 @@ class FileCreator:
             # Open scope for CMSSW
             "(",
             "eval `scramv1 runtime -sh`",
+            # Embed the proposed change to test it
+            "export CMSSW_CUSTOM_REPO='https://github.com/AdrianoDee/cmssw.git'",
+            "export CMSSW_CUSTOM_BRANCH='better_relmon'",
+            'git clone --no-checkout --sparse --filter=blob:none --branch "${CMSSW_CUSTOM_BRANCH}" --depth 1 "${CMSSW_CUSTOM_REPO}"',
+            'cd cmssw/',
+            'git sparse-checkout add Utilities/RelMon',
+            'git checkout',
+            'echo "Latest commit available: $(git rev-parse HEAD)"',
+            'cd ..',
+            # Pull the desired module
+            'mv ./cmssw/Utilities .',
+            'rm -rf ./cmssw',
+            # Recompile
+            "scram b -j 4",
+            # Continue with the normal workflow
             "cd ../..",
             # Create reports directory
             "mkdir -p Reports",
