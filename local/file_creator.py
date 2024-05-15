@@ -64,6 +64,11 @@ class FileCreator:
             # Open scope for CMSSW
             "(",
             "eval `scramv1 runtime -sh`",
+            # Embed the proposed change to test it
+            "git cms-addpkg Utilities/RelMon",
+            "curl -O https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/44977.diff && git apply 44977.diff",
+            "scram b -j 4",
+            # Continue with the normal workflow
             "cd ../..",
             # Create reports directory
             "mkdir -p Reports",
