@@ -65,13 +65,18 @@ class FileCreator:
             "(",
             "eval `scramv1 runtime -sh`",
             # Embed the proposed change to test it
-            # Configure git so that `git cms-addpkg` doesn't fail.
-            "git config --global user.name 'PdmV Service'",
-            "git config --global user.email 'pdmv.service@cern.ch'",
-            "git config --global user.github pdmvserv",
-            # Include the module to recompile
-            "git cms-addpkg Utilities/RelMon",
-            "curl -O https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/44977.diff && git apply 44977.diff",
+            "export CMSSW_CUSTOM_REPO='https://github.com/AdrianoDee/cmssw.git'",
+            "export CMSSW_CUSTOM_BRANCH='fix_RelMon_piecharts_dev'",
+            'git clone --no-checkout --sparse --filter=blob:none --branch "${CMSSW_CUSTOM_BRANCH}" --depth 1 "${CMSSW_CUSTOM_REPO}"',
+            'cd cmssw/',
+            'git sparse-checkout add Utilities/RelMon',
+            'git checkout',
+            'echo "Latest commit available: $(git rev-parse HEAD)"',
+            'cd ..'
+            # Pull the desired module
+            'mv ./cmssw/Utilities .'
+            'rm -rf ./cmssw'
+            # Recompile
             "scram b -j 4",
             # Continue with the normal workflow
             "cd ../..",
