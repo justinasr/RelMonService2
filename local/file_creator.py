@@ -72,10 +72,10 @@ class FileCreator:
             'git sparse-checkout add Utilities/RelMon',
             'git checkout',
             'echo "Latest commit available: $(git rev-parse HEAD)"',
-            'cd ..'
+            'cd ..',
             # Pull the desired module
-            'mv ./cmssw/Utilities .'
-            'rm -rf ./cmssw'
+            'mv ./cmssw/Utilities .',
+            'rm -rf ./cmssw',
             # Recompile
             "scram b -j 4",
             # Continue with the normal workflow
