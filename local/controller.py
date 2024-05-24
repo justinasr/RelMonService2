@@ -524,7 +524,7 @@ class Controller:
         body = "Hello,\n\n"
         body += "RelMon %s was reset by %s.\n" % (relmon_name, new_user_fullname)
         body += "You will not receive notification when this RelMon finishes running.\n"
-        body += "RelMon in RelMon Service: %s?q=%s\n" % (self.service_url, relmon_name)
+        body += "RelMon in RelMon Service: %s/?q=%s\n" % (self.service_url, relmon_name)
         subject = "RelMon %s was reset" % (relmon_name)
         recipients = [relmon.get_user_info()["email"]]
         self.email_sender.send(subject, body, recipients)
@@ -537,7 +537,7 @@ class Controller:
         body = "Hello,\n\n"
         body += "RelMon %s has finished running.\n" % (relmon_name)
         body += "Reports can be found here: %s?q=%s\n" % (self.reports_url, relmon_name)
-        body += "RelMon in RelMon Service: %s?q=%s\n" % (self.service_url, relmon_name)
+        body += "RelMon in RelMon Service: %s/?q=%s\n" % (self.service_url, relmon_name)
         if files:
             body += "You can find job output as an attachment.\n"
 
